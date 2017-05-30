@@ -7,11 +7,12 @@ class ORMController extends \Model\Controller {
 			if (!DEBUG_MODE and !checkCsrf())
 				$this->model->error('CSRF detected! Unauthorized.');
 
-			if(!isset($_REQUEST['data']))
-				$_REQUEST['data'] = '{}';
+			$data = $this->model->getInput('data');
+			if(!$data)
+				$data = '{}';
 
-			$data = json_decode($_REQUEST['data'], true);
-			if(!$data===null)
+			$data = json_decode($data, true);
+			if($data===null)
 				$this->model->error('Invalid data format.');
 
 			$className = $this->model->getRequest(1);
