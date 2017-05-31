@@ -274,9 +274,11 @@ class ORM extends Module{
 	/**
 	 * Controller for API actions
 	 *
+	 * @param array $request
+	 * @param string $rule
 	 * @return array
 	 */
-	public function getController(){
+	public function getController($request, $rule){
 		return [
 			'controller'=>'ORM',
 		];
