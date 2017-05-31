@@ -173,9 +173,11 @@ $controllers = '.var_export($controllers, true).';
 	 */
 	public function getRules(){
 		return [
-			'element'=>[
-				'rule'=>'element',
-				'controller'=>'ORM',
+			'rules'=>[
+				'element'=>'element',
+			],
+			'controllers'=>[
+				'ORM',
 			],
 		];
 	}
