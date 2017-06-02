@@ -67,7 +67,6 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			'options'=> [],
 			'files'=> [],
 			'child_el'=>false, // For the form module
-			'reference-form'=>false, // For the admin module
 			'fields'=> [], // For the form module
 			'model'=>false,
 		], $settings);
@@ -790,9 +789,6 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$opt = [
 						'value'=>$this->data_arr[$ck],
 					];
-					if($this->settings['reference-form'] and isset($this->settings['reference-form']->dati[$ck])){
-						$opt = array_merge($this->settings['reference-form']->dati[$ck]->initial_options, $opt);
-					}
 
 					if($ck=='password' and $cc['type']=='char' and $cc['length']==40)
 						$opt['type'] = 'password';
