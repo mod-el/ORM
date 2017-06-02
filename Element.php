@@ -782,13 +782,43 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 			$tableModel = $this->model->_Db->getTable($this->settings['table']);
 			if($tableModel){
-				foreach($tableModel->columns as $ck=>$cc){
+				$columns = $tableModel->columns;
+
+				$multilangColumns = [];
+				if($this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)){
+					$multilangTable = $this->settings['table'].$this->model->_Multilang->tables[$this->settings['table']]['suffix'];
+					$multilangTableModel = $this->model->_Db->getTable($multilangTable);
+					foreach($this->model->_Multilang->tables[$this->settings['table']]['fields'] as $ml){
+						$columns[$ml] = $multilangTableModel->columns[$ml];
+						$multilangColumns[] = $ml;
+					}
+
+					$langColumn = $this->model->_Multilang->tables[$this->settings['table']]['lang'];
+
+					$languageVersions = [];
+					$languageVersionsQ = $this->model->_Db->select_all($multilangTable, [
+						$this->model->_Multilang->tables[$this->settings['table']]['keyfield'] => $this->data_arr[$this->settings['primary']],
+					]);
+					foreach($languageVersionsQ as $r)
+						$languageVersions[$r[$langColumn]] = $r;
+				}
+
+				foreach($columns as $ck=>$cc){
 					if($ck==$this->settings['primary'] or $ck=='zk_deleted')
 						continue;
 
-					$opt = [
-						'value'=>$this->data_arr[$ck],
-					];
+					if(in_array($ck, $multilangColumns)){
+						$opt = [
+							'value'=>[],
+						];
+
+						foreach($languageVersions as $l=>$r)
+							$opt['value'][$l] = $r[$ck];
+					}else{
+						$opt = [
+							'value'=>$this->data_arr[$ck],
+						];
+					}
 
 					if($ck=='password' and $cc['type']=='char' and $cc['length']==40)
 						$opt['type'] = 'password';
