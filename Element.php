@@ -809,7 +809,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 					if(in_array($ck, $multilangColumns)){
 						$opt = [
-							'value'=>[],
+							'multilang' => true,
+							'value' => [],
 						];
 
 						foreach($languageVersions as $l=>$r)
