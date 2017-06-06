@@ -963,9 +963,10 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 			$saving = $this->update($data, $is_post);
 
-			$exists = $this->exists();
 			$db = $this->model->_Db;
-			if($exists){
+			if($this->exists()){
+				$previous_data = $this->db_data_arr;
+
 				$real_save = array();
 				foreach($saving as $k=>$v){
 					if(!array_key_exists($k, $this->db_data_arr) or $k=='zkversion' or $db->quote($this->db_data_arr[$k])!==$db->quote($v))
@@ -994,6 +995,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				}
 				$id = $this->data_arr[$this->settings['primary']];
 			}else{
+				$previous_data = false;
+
 				foreach($this->ar_autoIncrement as $k=>$opt){
 					if(!isset($saving[$k]) or !$saving[$k]){
 						$where = array();
@@ -1134,7 +1137,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 				if(!$this->_flagSaving){
 					$this->_flagSaving = true;
-					$this->afterSave($exists);
+					$this->afterSave($previous_data, $saving);
 					$this->_flagSaving = false;
 				}
 			}
@@ -1150,10 +1153,13 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 	/**
 	 * Called after a succesful update
+	 * $previous_data will be an array if the element previously existed, with the existing data
+	 * $saving is the actual data that have been saved
 	 *
-	 * @param bool $existing
+	 * @param bool|array $previous_data
+	 * @param array
 	 */
-	protected function afterSave($existing){}
+	protected function afterSave($previous_data, $saving){}
 
 	/**
 	 * Takes the post data as parameter ($data) and seek only for the data of a particular child and returns them
