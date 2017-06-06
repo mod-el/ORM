@@ -1012,6 +1012,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					}
 				}
 
+				$real_save = $saving;
 				$id = $db->insert($this->settings['table'], $saving);
 				if($id===false)
 					return false;
@@ -1137,7 +1138,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 				if(!$this->_flagSaving){
 					$this->_flagSaving = true;
-					$this->afterSave($previous_data, $saving);
+					$this->afterSave($previous_data, $real_save);
 					$this->_flagSaving = false;
 				}
 			}
