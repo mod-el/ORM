@@ -251,6 +251,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			'parent_field'=>'id', // Probabilmente non verrà mai modificata, ma non si sa mai... rappresenta il campo da usare come id in questo elemento, a cui anche i children fanno riferimento
 			'files'=>array(), // Ognuno dei children ha eventuali file collegati?
 			'fields'=>array(), // Ognuno dei children ha eventuali campi personalizzati?
+			'duplicable'=>true,
 		), $options);
 
 		if($options['field']===false){
@@ -1416,7 +1417,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			}
 
 			foreach ($this->children_setup as $k => $children) {
-				if ($children['type'] != 'multiple')
+				if ($children['type'] != 'multiple' or !$children['duplicable'])
 					continue;
 				foreach ($this->children($k) as $ch) {
 					$ch->duplicate([$children['field']=>$newEl['id']]);
