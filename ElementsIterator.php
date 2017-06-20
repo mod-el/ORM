@@ -56,7 +56,6 @@ class ElementsIterator implements \Iterator, \Countable {
 	 */
 	public function next(){
 		if($this->current){
-			$this->current->destroy();
 			$this->current = null;
 			gc_collect_cycles();
 		}
