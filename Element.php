@@ -238,7 +238,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		$options = array_merge(array(
 			'type'=>'multiple', // "multiple" o "single"
-			'element'=>'Element', // Tipo di elemento
+			'element'=>'\\Model\\Element', // Tipo di elemento
 			'table'=>false, // Tabella da cui leggere... se non viene fornita si cercherà di leggerla dall'elemento (in mancanza di questo, assumerà il valore di $name per convenzione)
 			'field'=>false, // Per i tipi "single", il campo di quest'elemento a cui sono legati - per i "multiple", il campo della loro tabella che usano per legarsi a quest'elemento (se non viene fornito, di default è: per i single il nome del children, per i multiple il nome di quest'elemento tutto minuscolo)
 			'direct'=>true, // Figlio diretto? Ad esempio, "camera" di un "hotel", quella camera appartiene solo a quell'hotel e non ad altri - se muore l'hotel muore la camera; mentre ad esempio non è diretto "città" di un "utente", che appartiene a quell'utente ma potenzialmente anche ad altri
@@ -266,7 +266,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		}
 
 		if($options['table']===false){
-			if($options['element']!='Element')
+			if($options['element']!='\\Model\\Element')
 				$options['table'] = $this->getElementTable($options['element']);
 			else
 				$options['table'] = $name;
@@ -478,10 +478,10 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					break;
 				}
 
-				if($child['element']!='Element')
+				if($child['element']!='\\Model\\Element')
 					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->data_arr[$child['field']], array('options'=>$options, 'child_el'=>$i, 'files'=>$child['files'], 'fields'=>$child['fields'], 'joins'=>$child['joins']));
 				elseif($child['table'])
-					$this->children_ar[$i] = new Element($this->model->_Db->select($child['table'], $this->data_arr[$child['field']]), array('parent'=>$this, 'model'=>$this->model, 'options'=>$options, 'joins'=>$child['joins'], 'table'=>$child['table'], 'child_el'=>$i, 'files'=>$child['files'], 'fields'=>$child['fields']));
+					$this->children_ar[$i] = new $child['element']($this->model->_Db->select($child['table'], $this->data_arr[$child['field']]), array('parent'=>$this, 'model'=>$this->model, 'options'=>$options, 'joins'=>$child['joins'], 'table'=>$child['table'], 'child_el'=>$i, 'files'=>$child['files'], 'fields'=>$child['fields']));
 				else
 					return false;
 				break;
