@@ -1237,8 +1237,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				$this->model->_Db->delete($this->settings['table'], [$this->settings['primary']=>$this->data_arr[$this->settings['primary']]]);
 
 				$form = $this->getForm();
-				foreach($form->dati as $d){ // Deletes all the files linked to the element
-					if($d->type=='file')
+				$dataset = $form->getDataset();
+				foreach($dataset as $d){ // Deletes all the files linked to the element
+					if($d->options['type']=='file')
 						$d->delete();
 				}
 
