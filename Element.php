@@ -230,9 +230,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Sets the rules for a set of children
 	 *
 	 * @param string $name
-	 * @param array $options
+	 * @param array|string|bool $options
 	 */
-	protected function has($name, array $options=array()){
+	protected function has($name, $options=array()){
 		if(!is_array($options))
 			$options = array('element'=>$options);
 
