@@ -47,7 +47,7 @@ class ORM extends Module{
 	 * @param array $options
 	 * @return Element|bool
 	 */
-	public function one($element, $where=false, $options=array()){
+	public function one($element, $where=false, array $options=array()){
 		$options = array_merge([
 			'model'=>$this->model,
 			'clone'=>false,
@@ -96,7 +96,7 @@ class ORM extends Module{
 	 * @param array $options
 	 * @return Element
 	 */
-	public function create($element, $options=array()){
+	public function create($element, array $options=array()){
 		return $this->one($element, false, $options);
 	}
 
@@ -105,11 +105,11 @@ class ORM extends Module{
 	 * If "stream" options is set, returns an ElementsIterator
 	 *
 	 * @param string $element
-	 * @param array $where
+	 * @param mixed $where
 	 * @param array $options
 	 * @return array|ElementsIterator
 	 */
-	public function all($element, $where=array(), $options=array()){
+	public function all($element, $where=array(), array $options=array()){
 		$table = $element::$table;
 		if(!$table)
 			$this->model->error('Error.', 'Class "'.$element.'" has no table.');
@@ -156,7 +156,7 @@ class ORM extends Module{
 	 * @param array $orderBy
 	 * @return string
 	 */
-	private function stringOrderBy($orderBy){
+	private function stringOrderBy(array $orderBy){
 		$arr = array();
 		foreach($orderBy as $field=>$opt){
 			if($opt['depending_on']) $arr[] = $opt['depending_on'].','.$field;
@@ -199,7 +199,7 @@ class ORM extends Module{
 	 * @param array $read_options
 	 * @return bool
 	 */
-	private function loadChildrenLoadingCache($table, $parent_field, $read_options){
+	private function loadChildrenLoadingCache($table, $parent_field, array $read_options){
 		if(!isset($this->children_loading[$table]) or !isset($this->children_loading[$table][$parent_field]))
 			return false;
 
@@ -234,7 +234,7 @@ class ORM extends Module{
 	 * @param array $read_options
 	 * @return array
 	 */
-	public function loadFromChildrenLoadingCache($table, $parent_field, $parent, $read_options=array()){
+	public function loadFromChildrenLoadingCache($table, $parent_field, $parent, array $read_options=array()){
 		if(!isset($this->children_loading[$table]) or !isset($this->children_loading[$table][$parent_field]))
 			return array();
 
@@ -278,7 +278,7 @@ class ORM extends Module{
 	 * @param string $rule
 	 * @return array
 	 */
-	public function getController($request, $rule){
+	public function getController(array $request, $rule){
 		return [
 			'controller'=>'ORM',
 		];
@@ -293,7 +293,7 @@ class ORM extends Module{
 	 * @param array $data
 	 * @return bool
 	 */
-	function isAPIActionAuthorized($className, $id, $method=false, $data=[]){
+	function isAPIActionAuthorized($className, $id, $method=false, array $data=[]){
 		if(DEBUG_MODE)
 			return true;
 

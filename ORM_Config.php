@@ -89,7 +89,7 @@ $controllers = '.var_export($controllers, true).';
 	 * @param array $dati
 	 * @return bool
 	 */
-	public function saveConfig($type, $dati){
+	public function saveConfig($type, array $dati){
 		$dati = array_map(function($v){
 			$v = trim($v);
 			return ($v!=='' ? $v : null);
@@ -146,7 +146,7 @@ $controllers = '.var_export($controllers, true).';
 	 * @param array $request
 	 * @return null|string
 	 */
-	public function getTemplate($request){
+	public function getTemplate(array $request){
 		return $request[2]=='config' ? INCLUDE_PATH.'model'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR.'elements' : null;
 	}
 
@@ -154,7 +154,7 @@ $controllers = '.var_export($controllers, true).';
 	 * @param array $data
 	 * @return mixed
 	 */
-	public function install($data = []){
+	public function install(array $data = []){
 		return $this->model->_Db->query('CREATE TABLE IF NOT EXISTS `zk_orm_permissions` (
 		  `id` int(11) NOT NULL AUTO_INCREMENT,
 		  `user_idx` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
