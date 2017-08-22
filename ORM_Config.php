@@ -25,7 +25,7 @@ class ORM_Config extends Module_Config {
 
 		$elements = array();
 		foreach($elementsNames as $name){
-			$obj = new $name(0, array('model'=>$this->model));
+			$obj = new $name(false, array('model'=>$this->model));
 			$elements[$name] = $obj->getElementTreeData();
 		}
 
