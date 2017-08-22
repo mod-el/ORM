@@ -911,10 +911,11 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 				$this->data_arr[$k] = $v;
 				$saving[$k] = $v;
-				if($this->form and isset($this->form->dati[$k]))
-					$this->form->dati[$k]->setValue($v);
 			}
 		}
+
+		if($this->form)
+			$this->form->populate($data);
 
 		$this->afterUpdate($saving);
 
