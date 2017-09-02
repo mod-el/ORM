@@ -868,8 +868,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		if($is_post){
 			$form = $this->getForm();
-			foreach($form->dati as $k => $d){
-				if($d->type!='checkbox') continue;
+			foreach($form->getDataset() as $k => $d){
+				if($d->options['type']!='checkbox') continue;
 				$data[$k] = isset($data[$k]) ? $data[$k] : 0;
 			}
 		}
@@ -1029,8 +1029,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			if($id!==false){
 				if($is_post){
 					$form = $this->getForm();
-					foreach($form->dati as $k => $d){
-						if($d->type!='file') continue;
+					foreach($form->getDataset() as $k => $d){
+						if($d->options['type']!='file') continue;
 						$d->save();
 					}
 
