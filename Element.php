@@ -58,22 +58,22 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	public function __construct($data, array $settings=array()){
 		$this->settings = array_merge([
-			'table'=>$this::$table,
-			'primary'=>'id',
-			'parent'=>false,
-			'pre_loaded'=>false,
-			'pre_loaded_children'=>[],
-			'defaults'=> [],
-			'options'=> [],
-			'files'=> [],
-			'child_el'=>false, // For the form module
-			'fields'=> [], // For the form module
-			'model'=>false,
+			'table' => $this::$table,
+			'primary' => 'id',
+			'parent' => false,
+			'pre_loaded' => false,
+			'pre_loaded_children' => [],
+			'defaults' => [],
+			'options' => [],
+			'files' => [],
+			'child_el' => false, // For the form module
+			'fields' => [], // For the form module
+			'model' => false,
 		], $settings);
 
 		if(!is_array($data)){
 			$data = [
-				$this->settings['primary']=>$data,
+				$this->settings['primary'] => $data,
 			];
 		}
 
@@ -91,9 +91,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		$this->settings['files'] = array_merge($this::$files, $this->settings['files']);
 		$this->settings['fields'] = array_merge($this::$fields, $this->settings['fields']);
-		foreach($this->settings['fields'] as $fk=>$f){
+		foreach($this->settings['fields'] as $fk => $f){
 			if(!is_array($f))
-				$this->settings['fields'][$fk] = array('type'=>$f);
+				$this->settings['fields'][$fk] = array('type' => $f);
 			if(!isset($this->settings['fields'][$fk]['type']))
 				$this->settings['fields'][$fk]['type'] = false;
 		}
@@ -136,9 +136,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		$this->model = null;
 		if(is_object($this->parent))
 			$this->parent = null;
-		foreach($this->children_ar as $k=>$ch){
+		foreach($this->children_ar as $k => $ch){
 			if(is_array($ch)){
-				foreach($ch as $ck=>$c){
+				foreach($ch as $ck => $c){
 					if(is_object($c)){
 						if(method_exists($c, 'destroy'))
 							$c->destroy();
@@ -187,11 +187,11 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	public function __clone(){
 		if(!$this->loaded)
 			return;
-		foreach($this->children_ar as $k=>$ch){
+		foreach($this->children_ar as $k => $ch){
 			if(is_object($ch))
 				$this->children_ar[$k] = clone $ch;
 			elseif(is_array($ch)){
-				foreach($ch as $ck=>$c){
+				foreach($ch as $ck => $c){
 					if(is_object($c))
 						$this->children_ar[$k][$ck] = clone $c;
 				}
@@ -234,24 +234,24 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	protected function has($name, $options=array()){
 		if(!is_array($options))
-			$options = array('element'=>$options);
+			$options = array('element' => $options);
 
 		$options = array_merge(array(
-			'type'=>'multiple', // "multiple" o "single"
-			'element'=>'\\Model\\Element', // Tipo di elemento
-			'table'=>false, // Tabella da cui leggere... se non viene fornita si cercherà di leggerla dall'elemento (in mancanza di questo, assumerà il valore di $name per convenzione)
-			'field'=>false, // Per i tipi "single", il campo di quest'elemento a cui sono legati - per i "multiple", il campo della loro tabella che usano per legarsi a quest'elemento (se non viene fornito, di default è: per i single il nome del children, per i multiple il nome di quest'elemento tutto minuscolo)
-			'direct'=>true, // Figlio diretto? Ad esempio, "camera" di un "hotel", quella camera appartiene solo a quell'hotel e non ad altri - se muore l'hotel muore la camera; mentre ad esempio non è diretto "città" di un "utente", che appartiene a quell'utente ma potenzialmente anche ad altri
-			'where'=>array(), // Eventuali filtri da utilizzare (solo per "multiple")
-			'joins'=>array(), // Eventuali join da effettuare
-			'order_by'=>false, // Se ordinarli secondo un particolare campo
-			'save'=>false, // Se impostato a true, l'estensione SavingElement cercherà eventuali dati in ingresso da salvare anche relativi a questo children
-			'save-costraints'=>[], // Campi che è obbligatorio aver inserito affinché il salvataggio di una riga avvenga
-			'assoc'=>false, // Alcuni particolari tipi di children passano per una tabella che fa da mediazione "molti a molti", qui si può specificare qual è (array con le seguenti opzioni: table, parent, field, where*, order_by*) *opzionali
-			'parent_field'=>'id', // Probabilmente non verrà mai modificata, ma non si sa mai... rappresenta il campo da usare come id in questo elemento, a cui anche i children fanno riferimento
-			'files'=>array(), // Ognuno dei children ha eventuali file collegati?
-			'fields'=>array(), // Ognuno dei children ha eventuali campi personalizzati?
-			'duplicable'=>true,
+			'type' => 'multiple', // "multiple" o "single"
+			'element' => '\\Model\\Element', // Tipo di elemento
+			'table' => false, // Tabella da cui leggere... se non viene fornita si cercherà di leggerla dall'elemento (in mancanza di questo, assumerà il valore di $name per convenzione)
+			'field' => false, // Per i tipi "single", il campo di quest'elemento a cui sono legati - per i "multiple", il campo della loro tabella che usano per legarsi a quest'elemento (se non viene fornito, di default è: per i single il nome del children, per i multiple il nome di quest'elemento tutto minuscolo)
+			'direct' => true, // Figlio diretto? Ad esempio, "camera" di un "hotel", quella camera appartiene solo a quell'hotel e non ad altri - se muore l'hotel muore la camera; mentre ad esempio non è diretto "città" di un "utente", che appartiene a quell'utente ma potenzialmente anche ad altri
+			'where' => array(), // Eventuali filtri da utilizzare (solo per "multiple")
+			'joins' => array(), // Eventuali join da effettuare
+			'order_by' => false, // Se ordinarli secondo un particolare campo
+			'save' => false, // Se impostato a true, l'estensione SavingElement cercherà eventuali dati in ingresso da salvare anche relativi a questo children
+			'save-costraints' => [], // Campi che è obbligatorio aver inserito affinché il salvataggio di una riga avvenga
+			'assoc' => false, // Alcuni particolari tipi di children passano per una tabella che fa da mediazione "molti a molti", qui si può specificare qual è (array con le seguenti opzioni: table, parent, field, where*, order_by*) *opzionali
+			'parent_field' => 'id', // Probabilmente non verrà mai modificata, ma non si sa mai... rappresenta il campo da usare come id in questo elemento, a cui anche i children fanno riferimento
+			'files' => array(), // Ognuno dei children ha eventuali file collegati?
+			'fields' => array(), // Ognuno dei children ha eventuali campi personalizzati?
+			'duplicable' => true,
 		), $options);
 
 		if($options['field']===false){
@@ -283,9 +283,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	protected function belongsTo($el, array $options=array()){
 		$options = array_merge(array(
-			'element'=>$el,
-			'field'=>false,
-			'children'=>false,
+			'element' => $el,
+			'field' => false,
+			'children' => false,
 		), $options);
 		if($options['field']===false)
 			$options['field'] = strtolower(preg_replace('/(?<!^)([A-Z])/', '_\\1', $el));
@@ -300,7 +300,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	protected function autoIncrement($field, array $options=array()){
 		$this->ar_autoIncrement[$field] = array_merge(array(
-			'depending_on'=>false,
+			'depending_on' => false,
 		), $options);
 	}
 
@@ -312,7 +312,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	protected function orderBy($field, array $options=array()){
 		$this->ar_orderBy[$field] = array_merge(array(
-			'depending_on'=>false,
+			'depending_on' => false,
 		), $options);
 		$this->autoIncrement($field, $options);
 	}
@@ -348,7 +348,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					if($this->data_arr[$this->settings['primary']]===false)
 						$temp_data = false;
 					else
-						$temp_data = $this->model->_Db->select($this->settings['table'], [$this->settings['primary']=>$this->data_arr[$this->settings['primary']]]);
+						$temp_data = $this->model->_Db->select($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]]);
 				}
 
 				if($temp_data===false){
@@ -371,7 +371,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			 */
 			$tableModel = $this->model->_Db ? $this->model->_Db->getTable($this->settings['table']) : false;
 			if($tableModel!==false){
-				foreach($tableModel->columns as $ck=>$cc){
+				foreach($tableModel->columns as $ck => $cc){
 					if(!array_key_exists($ck, $this->data_arr)){
 						if(array_key_exists($ck, $this->settings['defaults'])){
 							$this->data_arr[$ck] = $this->settings['defaults'][$ck];
@@ -424,7 +424,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$settings = [
 						'pre_loaded_children' => [
 							$this->init_parent['children'] => [
-								$this->data_arr[$this->settings['primary']] => $this
+								$this->data_arr[$this->settings['primary']] => $this,
 							],
 						],
 					];
@@ -441,9 +441,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	public function jsonSerialize(){
 		$this->load();
-		$return = array('exists'=>$this->exists(), 'data'=>$this->data_arr, 'options'=>$this->options);
+		$return = array('exists' => $this->exists(), 'data' => $this->data_arr, 'options' => $this->options);
 		if($this->parent!==false)
-			$return['parent'] = array('element'=>get_class($this->parent), 'id'=>$this->parent[$this->parent->settings['primary']]);
+			$return['parent'] = array('element' => get_class($this->parent), 'id' => $this->parent[$this->parent->settings['primary']]);
 		return $return;
 	}
 
@@ -479,9 +479,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				}
 
 				if($child['element']!='\\Model\\Element')
-					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->data_arr[$child['field']], array('options'=>$options, 'child_el'=>$i, 'files'=>$child['files'], 'fields'=>$child['fields'], 'joins'=>$child['joins']));
+					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->data_arr[$child['field']], array('options' => $options, 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']));
 				elseif($child['table'])
-					$this->children_ar[$i] = new $child['element']($this->model->_Db->select($child['table'], $this->data_arr[$child['field']]), array('parent'=>$this, 'model'=>$this->model, 'options'=>$options, 'joins'=>$child['joins'], 'table'=>$child['table'], 'child_el'=>$i, 'files'=>$child['files'], 'fields'=>$child['fields']));
+					$this->children_ar[$i] = new $child['element']($this->model->_Db->select($child['table'], $this->data_arr[$child['field']]), array('parent' => $this, 'model' => $this->model, 'options' => $options, 'joins' => $child['joins'], 'table' => $child['table'], 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields']));
 				else
 					return false;
 				break;
@@ -501,7 +501,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$this->children_ar[$i] = array();
 					foreach($q as $c){
 						$options['assoc'] = $c;
-						$new_child = new $child['element']($c[$child['assoc']['field']], array('parent'=>$this, 'model'=>$this->model, 'table'=>$child['table'], 'joins'=>$child['joins'], 'options'=>$options, 'child_el'=>$i.'-'.$c['id'], 'files'=>$child['files'], 'fields'=>$child['fields']));
+						$new_child = new $child['element']($c[$child['assoc']['field']], array('parent' => $this, 'model' => $this->model, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i.'-'.$c['id'], 'files' => $child['files'], 'fields' => $child['fields']));
 						$this->children_ar[$i][$c['id']] = $new_child;
 					}
 				}else{
@@ -572,7 +572,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				if(!$child['field'])
 					return false;
 
-				return new $child['element']($id, array('parent'=>$this, 'model'=>$this->model, 'options'=>$options, 'table'=>$child['table'], 'child_el'=>$i, 'files'=>$child['files'], 'fields'=>$child['fields']));
+				return new $child['element']($id, array('parent' => $this, 'model' => $this->model, 'options' => $options, 'table' => $child['table'], 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields']));
 				break;
 			case 'multiple':
 				if($child['assoc']){
@@ -587,7 +587,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$data[$child['field']] = $this->data_arr[$child['parent_field']];
 					$data['id'] = $id;
 
-					return new $child['element']($data, array('parent'=>$this, 'model'=>$this->model, 'pre_loaded'=>true, 'table'=>$child['table'], 'options'=>$options, 'child_el'=>$i.'-'.$id, 'files'=>$child['files'], 'fields'=>$child['fields']));
+					return new $child['element']($data, array('parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'options' => $options, 'child_el' => $i.'-'.$id, 'files' => $child['files'], 'fields' => $child['fields']));
 				}
 				break;
 		}
@@ -676,7 +676,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		$this->loaded = false;
 		$this->settings['pre_loaded'] = false;
 		$this->data_arr = [
-			$this->settings['primary']=>$this->data_arr[$this->settings['primary']],
+			$this->settings['primary'] => $this->data_arr[$this->settings['primary']],
 		];
 		$this->children_ar = [];
 		$this->load();
@@ -727,11 +727,11 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		$this->load();
 
 		$meta = array(
-			'title'=>false,
-			'description'=>false,
-			'keys'=>false,
-			'img'=>$this->getMainImg(),
-			'og_type'=>'website'
+			'title' => false,
+			'description' => false,
+			'keys' => false,
+			'img' => $this->getMainImg(),
+			'og_type' => 'website',
 		);
 
 		if(isset($this->data_arr['titolo']))
@@ -777,8 +777,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$this->load();
 
 			$this->form = new Form([
-				'table'=>$this->settings['table'],
-				'model'=>$this->model,
+				'table' => $this->settings['table'],
+				'model' => $this->model,
 			]);
 
 			$tableModel = $this->model->_Db->getTable($this->settings['table']);
@@ -804,7 +804,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						$languageVersions[$r[$langColumn]] = $r;
 				}
 
-				foreach($columns as $ck=>$cc){
+				foreach($columns as $ck => $cc){
 					if($ck==$this->settings['primary'] or $ck=='zk_deleted')
 						continue;
 
@@ -814,11 +814,11 @@ class Element implements \JsonSerializable, \ArrayAccess{
 							'value' => [],
 						];
 
-						foreach($languageVersions as $l=>$r)
+						foreach($languageVersions as $l => $r)
 							$opt['value'][$l] = $r[$ck];
 					}else{
 						$opt = [
-							'value'=>$this->data_arr[$ck],
+							'value' => $this->data_arr[$ck],
 						];
 					}
 
@@ -835,9 +835,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				}
 			}
 
-			foreach($this->settings['files'] as $k=>$f){
+			foreach($this->settings['files'] as $k => $f){
 				if(!is_array($f))
-					$f = array('path'=>$f);
+					$f = array('path' => $f);
 				$f['type'] = 'file';
 				$f['element'] = $this;
 				$f['child_el'] = $this->settings['child_el'];
@@ -868,7 +868,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		if($is_post){
 			$form = $this->getForm();
-			foreach($form->dati as $k=>$d){
+			foreach($form->dati as $k => $d){
 				if($d->type!='checkbox') continue;
 				$data[$k] = isset($data[$k]) ? $data[$k] : 0;
 			}
@@ -883,7 +883,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$this->model->error('Can\'t find cached table model for "'.$this->settings['table'].'"');
 
 		$saving = array();
-		foreach($data as $k=>$v){
+		foreach($data as $k => $v){
 			if(in_array($k, $keys)){
 				// I look only for data present in the main table
 				if($tableModel->columns[$k]['null'] and $v===''){
@@ -970,23 +970,23 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				$previous_data = $this->db_data_arr;
 
 				$real_save = array();
-				foreach($saving as $k=>$v){
+				foreach($saving as $k => $v){
 					if(!array_key_exists($k, $this->db_data_arr) or $k=='zkversion' or $db->quote($this->db_data_arr[$k])!==$db->quote($v))
 						$real_save[$k] = $v;
 				}
 
 				if(!empty($real_save)){
-					foreach($this->ar_orderBy as $k=>$opt){ // If order parent was changed, I need to place the element at the end of the new list (and decrease the old list)
+					foreach($this->ar_orderBy as $k => $opt){ // If order parent was changed, I need to place the element at the end of the new list (and decrease the old list)
 						if($opt['depending_on'] and isset($real_save[$opt['depending_on']])){
 							$old_v = $this->db_data_arr[$opt['depending_on']];
 							$this->shiftOrder($k, $this->db_data_arr[$k], $old_v);
 
 							$new_v = $real_save[$opt['depending_on']];
-							$real_save[$k] = ((int) $db->select($this->settings['table'], array($opt['depending_on']=>$new_v), array('max'=>$k)))+1;
+							$real_save[$k] = ((int) $db->select($this->settings['table'], array($opt['depending_on'] => $new_v), array('max' => $k)))+1;
 						}
 					}
 
-					$updating = $db->update($this->settings['table'], [$this->settings['primary']=>$this->data_arr[$this->settings['primary']]], $real_save);
+					$updating = $db->update($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]], $real_save);
 					if($updating===false)
 						return false;
 					if(is_array($updating) and isset($updating['zkversion'])){
@@ -999,7 +999,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			}else{
 				$previous_data = false;
 
-				foreach($this->ar_autoIncrement as $k=>$opt){
+				foreach($this->ar_autoIncrement as $k => $opt){
 					if(!isset($saving[$k]) or !$saving[$k]){
 						$where = array();
 						if($opt['depending_on']){
@@ -1009,7 +1009,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 							foreach($opt['depending_on'] as $k_dep)
 								$where[$k_dep] = $saving[$k_dep];
 						}
-						$saving[$k] = ((int) $db->select($this->settings['table'], $where, array('max'=>$k)))+1;
+						$saving[$k] = ((int) $db->select($this->settings['table'], $where, array('max' => $k)))+1;
 						$this->data_arr[$k] = $saving[$k];
 					}
 				}
@@ -1029,12 +1029,12 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			if($id!==false){
 				if($is_post){
 					$form = $this->getForm();
-					foreach($form->dati as $k=>$d){
+					foreach($form->dati as $k => $d){
 						if($d->type!='file') continue;
 						$d->save();
 					}
 
-					foreach($this->children_setup as $ck=>$ch){
+					foreach($this->children_setup as $ck => $ch){
 						if(!$ch['save'])
 							continue;
 
@@ -1053,16 +1053,16 @@ class Element implements \JsonSerializable, \ArrayAccess{
 									if($this->data_arr[$ch['field']]){ // Esiste
 										$this->{$ck}->save($saving);
 									}else{ // Not existing
-										$new_el = new $ch['element'](0, array('model'=>$this->model, 'table'=>$ch['table']));
+										$new_el = new $ch['element'](0, array('model' => $this->model, 'table' => $ch['table']));
 										$new_id = $new_el->save($saving);
 										$this->children_ar[$ck] = $new_el;
-										$this->save(array($ch['field']=>$new_id), $is_post);
+										$this->save(array($ch['field'] => $new_id), $is_post);
 									}
 								}
 								break;
 							case 'multiple':
 								if($ch['assoc']){
-									foreach($this->{$ck} as $c_id=>$c){
+									foreach($this->{$ck} as $c_id => $c){
 										if(isset($dati_orig['ch-'.$ck.'-'.$c_id])){
 											if($dati_orig['ch-'.$ck.'-'.$c_id]){
 												$saving = $this->getChildrenData($dati_orig, $keys, $ck, $c_id);
@@ -1096,7 +1096,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 									$this->children_ar[$ck] = false;
 								}else{
-									foreach($this->{$ck} as $c_id=>$c){
+									foreach($this->{$ck} as $c_id => $c){
 										if(isset($dati_orig['ch-'.$ck.'-'.$c_id])){
 											if($dati_orig['ch-'.$ck.'-'.$c_id]){
 												$saving = $this->getChildrenData($dati_orig, $keys, $ck, $c_id);
@@ -1175,7 +1175,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	private function getChildrenData(array $data, array $keys, $ch, $id=false){
 		$arr = array();
-		foreach($data as $k=>$v){
+		foreach($data as $k => $v){
 			foreach($keys as $kk){
 				if($id===false){
 					if($k=='ch-'.$kk.'-'.$ch)
@@ -1190,9 +1190,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		$nome_el = $this->children_setup[$ch]['element'];
 		$fields = ($nome_el and isset($nome_el::$fields)) ? $nome_el::$fields : array();
 
-		foreach($fields as $k=>$t){ // I look for the checkboxes, they behave in a different way in post data: if the key exists, it's 1, otherwise 0
+		foreach($fields as $k => $t){ // I look for the checkboxes, they behave in a different way in post data: if the key exists, it's 1, otherwise 0
 			if(!is_array($t))
-				$t = array('type'=>$t);
+				$t = array('type' => $t);
 			if($t['type']!='checkbox') continue;
 			if($id===false){
 				$arr[$k] = isset($data['ch-'.$k.'-'.$ch]) ? $data['ch-'.$k.'-'.$ch] : 0;
@@ -1227,7 +1227,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$this->model->_Db->beginTransaction();
 
 			if($this->beforeDelete()){
-				foreach($this->ar_orderBy as $campo=>$opt){
+				foreach($this->ar_orderBy as $campo => $opt){
 					if($opt['depending_on']!==false){
 						$this->shiftOrder($campo, $this->db_data_arr[$campo], $this->db_data_arr[$opt['depending_on']]);
 					}else{
@@ -1235,7 +1235,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					}
 				}
 
-				$this->model->_Db->delete($this->settings['table'], [$this->settings['primary']=>$this->data_arr[$this->settings['primary']]]);
+				$this->model->_Db->delete($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]]);
 
 				$form = $this->getForm();
 				$dataset = $form->getDataset();
@@ -1299,12 +1299,12 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	public function getElementTreeData(){
 		$this->load();
 		return array(
-			'table'=>$this->settings['table'],
-			'controller'=>$this::$controller,
-			'children'=>$this->children_setup,
-			'parent'=>$this->init_parent,
-			'auto_increment'=>$this->ar_autoIncrement,
-			'order_by'=>$this->ar_orderBy,
+			'table' => $this->settings['table'],
+			'controller' => $this::$controller,
+			'children' => $this->children_setup,
+			'parent' => $this->init_parent,
+			'auto_increment' => $this->ar_autoIncrement,
+			'order_by' => $this->ar_orderBy,
 		);
 	}
 
@@ -1348,8 +1348,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	public function getFilePath($fIdx=false, array $options=[]){
 		$options = array_merge([
-			'allPaths'=>false,
-			'fakeElement'=>false,
+			'allPaths' => false,
+			'fakeElement' => false,
 		], $options);
 
 		if($fIdx===false){
@@ -1422,7 +1422,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				if ($children['type'] != 'multiple' or !$children['duplicable'])
 					continue;
 				foreach ($this->children($k) as $ch) {
-					$ch->duplicate([$children['field']=>$newEl['id']]);
+					$ch->duplicate([$children['field'] => $newEl['id']]);
 				}
 			}
 
