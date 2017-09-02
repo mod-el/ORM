@@ -915,7 +915,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		}
 
 		if($this->form)
-			$this->form->populate($data);
+			$this->form->setValues($data);
 
 		$this->afterUpdate($saving);
 
