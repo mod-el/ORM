@@ -142,7 +142,7 @@ class ORM extends Module{
 	 * Loads the main Element of the page (if any)
 	 *
 	 * @param string $element
-	 * @param int $id
+	 * @param int|bool $id
 	 * @return bool|Element
 	 */
 	public function loadMainElement($element, $id){
