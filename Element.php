@@ -778,6 +778,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 			$this->form = new Form([
 				'table' => $this->settings['table'],
+				'element' => $this,
 				'model' => $this->model,
 			]);
 
