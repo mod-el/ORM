@@ -1032,7 +1032,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$form = $this->getForm();
 					$dataset = $form->getDataset();
 					foreach($dataset as $k => $d){
-						$d->save();
+						$d->save(isset($data[$k]) ? $data[$k] : null);
 					}
 
 					foreach($this->children_setup as $ck => $ch){
