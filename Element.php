@@ -1030,8 +1030,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			if($id!==false){
 				if($is_post){
 					$form = $this->getForm();
-					foreach($form->getDataset() as $k => $d){
-						if($d->options['type']!='file') continue;
+					$dataset = $form->getDataset();
+					foreach($dataset as $k => $d){
 						$d->save();
 					}
 
@@ -1240,9 +1240,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 				$form = $this->getForm();
 				$dataset = $form->getDataset();
-				foreach($dataset as $d){ // Deletes all the files linked to the element
-					if($d->options['type']=='file')
-						$d->delete();
+				foreach($dataset as $d){
+					$d->delete();
 				}
 
 				$this->afterDelete();
