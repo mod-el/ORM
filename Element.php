@@ -1002,7 +1002,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 				$real_save = array();
 				foreach($saving as $k => $v){ // Only data that actually changed will be saved
-					if(!array_key_exists($k, $this->db_data_arr) or $k=='zkversion' or (is_array($v) and $db->quote($this->db_data_arr[$k])!==$db->quote($v[$this->model->_Multilang->lang])) or $db->quote($this->db_data_arr[$k])!==$db->quote($v))
+					if(!array_key_exists($k, $this->db_data_arr) or $k=='zkversion' or is_array($v) or $db->quote($this->db_data_arr[$k])!==$db->quote($v))
 						$real_save[$k] = $v;
 				}
 
