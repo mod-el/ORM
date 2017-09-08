@@ -858,16 +858,20 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 	/**
 	 * Update the internal array (is not saving to database yet)
-	 * If $is_post is set to true, it will check eventual checkboxes as well (assuming that $data comes from $_POST)
 	 *
 	 * @param array $data
-	 * @param bool $is_post
+	 * @param array $options
 	 * @return array
 	 */
-	public function update(array $data, $is_post = false){
+	public function update(array $data, array $options = []){
+		$options = array_merge([
+			'checkboxes' => false,
+			'children' => false,
+		], $options);
+
 		$this->load();
 
-		if($is_post){
+		if($options['checkboxes']){
 			$form = $this->getForm();
 			foreach($form->getDataset() as $k => $d){
 				if($d->options['type']!='checkbox') continue;
@@ -962,11 +966,16 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Returns the saved element id
 	 *
 	 * @param array $data
-	 * @param bool $is_post
+	 * @param array $options
 	 * @return bool|int
 	 * @throws \Exception
 	 */
-	function save($data = null, $is_post = false){
+	function save(array $data = null, array $options = []){
+		$options = array_merge([
+			'checkboxes' => false,
+			'children' => false,
+		], $options);
+
 		$dati_orig = $data;
 
 		if($data===null){
@@ -983,7 +992,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 			$this->beforeSave($data);
 
-			$saving = $this->update($data, $is_post);
+			$saving = $this->update($data, $options);
 
 			$db = $this->model->_Db;
 			if($this->exists()){
@@ -1044,13 +1053,13 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			}
 
 			if($id!==false){
-				if($is_post){
-					$form = $this->getForm();
-					$dataset = $form->getDataset();
-					foreach($dataset as $k => $d){
-						$d->save(isset($data[$k]) ? $data[$k] : null);
-					}
+				$form = $this->getForm();
+				$dataset = $form->getDataset();
+				foreach($dataset as $k => $d){
+					$d->save(isset($data[$k]) ? $data[$k] : null);
+				}
 
+				if($options['children']){
 					foreach($this->children_setup as $ck => $ch){
 						if(!$ch['save'])
 							continue;
@@ -1073,7 +1082,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 										$new_el = new $ch['element'](0, array('model' => $this->model, 'table' => $ch['table']));
 										$new_id = $new_el->save($saving);
 										$this->children_ar[$ck] = $new_el;
-										$this->save(array($ch['field'] => $new_id), $is_post);
+										$this->save(array($ch['field'] => $new_id), $options);
 									}
 								}
 								break;
@@ -1122,7 +1131,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 														continue 2;
 												}
 
-												$c->save($saving, $is_post);
+												$c->save($saving, $options);
 											}else{
 												if($c->delete())
 													unset($this->children_ar[$ck][$c_id]);
@@ -1143,7 +1152,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 										$saving[$ch['field']] = $id;
 										$new_el = $this->create($ck, 'new'.$new);
-										$new_id = $new_el->save($saving, $is_post);
+										$new_id = $new_el->save($saving, $options);
 										$this->children_ar[$ck][$new_id] = $new_el;
 										$new++;
 									}
