@@ -900,6 +900,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				$column = $multilangTableModel->columns[$k];
 				if(is_array($v)){
 					if(array_key_exists($this->model->_Multilang->lang, $v)){
+						$saving[$k] = $v;
+
 						$v = $v[$this->model->_Multilang->lang];
 					}else{
 						continue;
@@ -907,6 +909,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				}
 			}elseif(in_array($k, $keys)){
 				$column = $tableModel->columns[$k];
+				$saving[$k] = $v;
 			}else{
 				continue;
 			}
@@ -935,7 +938,6 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			}
 
 			$this->data_arr[$k] = $v;
-			$saving[$k] = $v;
 		}
 
 		if($this->form)
@@ -999,8 +1001,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				$previous_data = $this->db_data_arr;
 
 				$real_save = array();
-				foreach($saving as $k => $v){
-					if(!array_key_exists($k, $this->db_data_arr) or $k=='zkversion' or $db->quote($this->db_data_arr[$k])!==$db->quote($v))
+				foreach($saving as $k => $v){ // Only data that actually changed will be saved
+					if(!array_key_exists($k, $this->db_data_arr) or $k=='zkversion' or (is_array($v) and $db->quote($this->db_data_arr[$k])!==$db->quote($v[$this->model->_Multilang->lang])) or $db->quote($this->db_data_arr[$k])!==$db->quote($v))
 						$real_save[$k] = $v;
 				}
 
