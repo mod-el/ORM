@@ -864,7 +864,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param bool $is_post
 	 * @return array
 	 */
-	public function update(array $data, $is_post=false){
+	public function update(array $data, $is_post = false){
 		$this->load();
 
 		if($is_post){
@@ -883,36 +883,55 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		if($tableModel===false or $keys===false)
 			$this->model->error('Can\'t find cached table model for "'.$this->settings['table'].'"');
 
+		$multilangKeys = [];
+		if($this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)){
+			$multilangTable = $this->settings['table'].$this->model->_Multilang->tables[$this->settings['table']]['suffix'];
+			$multilangTableModel = $this->model->_Db->getTable($multilangTable);
+			$multilangKeys = $this->model->_Multilang->tables[$this->settings['table']]['fields'];
+		}
+
 		$saving = array();
 		foreach($data as $k => $v){
-			if(in_array($k, $keys)){
-				// I look only for data present in the main table
-				if($tableModel->columns[$k]['null'] and $v===''){
-					$v = null;
-				}else{
-					if(in_array($tableModel->columns[$k]['type'], array('date', 'datetime'))){
-						if(is_object($v)) {
-							if(get_class($v)!='DateTime')
-								$this->model->error('Only DateTime objects can be saved in a date or datetime field.');
-						}else{
-							$v = $v ? date_create($v) : null;
-						}
-
-						if($v){
-							switch($tableModel->columns[$k]['type']){
-								case 'date': $v = $v->format('Y-m-d'); break;
-								case 'datetime': $v = $v->format('Y-m-d H:i:s'); break;
-							}
-						}else{
-							if($tableModel->columns[$k]['null']) $v = null;
-							else $v = '';
-						}
+			if(in_array($k, $multilangKeys)){ // In case of multilang columns, I only update the current language in the element
+				$column = $multilangTableModel->columns[$k];
+				if(is_array($v)){
+					if(array_key_exists($this->model->_Multilang->lang, $v)){
+						$v = $v[$this->model->_Multilang->lang];
+					}else{
+						continue;
 					}
 				}
-
-				$this->data_arr[$k] = $v;
-				$saving[$k] = $v;
+			}elseif(in_array($k, $keys)){
+				$column = $tableModel->columns[$k];
+			}else{
+				continue;
 			}
+
+			if($column['null'] and $v===''){
+				$v = null;
+			}else{
+				if(in_array($column['type'], array('date', 'datetime'))){
+					if(is_object($v)) {
+						if(get_class($v)!='DateTime')
+							$this->model->error('Only DateTime objects can be saved in a date or datetime field.');
+					}else{
+						$v = $v ? date_create($v) : null;
+					}
+
+					if($v){
+						switch($column['type']){
+							case 'date': $v = $v->format('Y-m-d'); break;
+							case 'datetime': $v = $v->format('Y-m-d H:i:s'); break;
+						}
+					}else{
+						if($column['null']) $v = null;
+						else $v = '';
+					}
+				}
+			}
+
+			$this->data_arr[$k] = $v;
+			$saving[$k] = $v;
 		}
 
 		if($this->form)
@@ -942,21 +961,21 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * If no data is provided, it saves the current internal data
 	 * Returns the saved element id
 	 *
-	 * @param bool|array $data
+	 * @param array $data
 	 * @param bool $is_post
 	 * @return bool|int
 	 * @throws \Exception
 	 */
-	function save($data=false, $is_post=false){
+	function save($data = null, $is_post = false){
 		$dati_orig = $data;
-		if(!$this->exists() and $data!==false){
-			$this->update($data, $is_post);
-			$data = false;
-		}
-		if($data===false){
+
+		if($data===null){
 			$data = $this->data_arr;
 			if(isset($data[$this->settings['primary']]))
 				unset($data[$this->settings['primary']]);
+		}
+		if($dati_orig===null){
+			$dati_orig = $data;
 		}
 
 		try{
@@ -990,10 +1009,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$updating = $db->update($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]], $real_save);
 					if($updating===false)
 						return false;
-					if(is_array($updating) and isset($updating['zkversion'])){
-						$real_save['zkversion'] = $updating['zkversion'];
-						$this->data_arr['zkversion'] = $updating['zkversion'];
-					}
+
 					$this->db_data_arr = array_merge($this->db_data_arr, $real_save);
 				}
 				$id = $this->data_arr[$this->settings['primary']];
