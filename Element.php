@@ -899,9 +899,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			if(in_array($k, $multilangKeys)){ // In case of multilang columns, I only update the current language in the element
 				$column = $multilangTableModel->columns[$k];
 				if(is_array($v)){
-					if(array_key_exists($this->model->_Multilang->lang, $v)){
-						$saving[$k] = $v;
+					$saving[$k] = $v;
 
+					if(array_key_exists($this->model->_Multilang->lang, $v)){
 						$v = $v[$this->model->_Multilang->lang];
 					}else{
 						continue;
