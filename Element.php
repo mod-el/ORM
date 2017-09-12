@@ -1373,7 +1373,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param array $options
 	 * @return string|bool
 	 */
-	public function getFilePath($fIdx=false, array $options=[]){
+	public function getFilePath($fIdx = false, array $options = []){
 		$options = array_merge([
 			'allPaths' => false,
 			'fakeElement' => false,
@@ -1385,16 +1385,27 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				$fIdx = key($this->settings['files']);
 			}
 		}
-		if(!isset($this->settings['files'][$fIdx]))
-			return false;
 
 		$form = $this->getForm();
-		$file = $form[$fIdx];
-		if(!is_object($file) or get_class($file)!=='MFile')
+		$dataset = $form->getDataset();
+
+		if($fIdx===false){
+			foreach($dataset as $k => $f){
+				if($f->options['type']==='file'){
+					$fIdx = $k;
+					break;
+				}
+			}
+		}
+		if(!isset($dataset[$fIdx]))
+			return false;
+
+		$file = $dataset[$fIdx];
+		if(!is_object($file) or $file->options['type']!=='file')
 			return false;
 
 		if($options['fakeElement']){
-			$file->options['element'] = $options['fakeElement'];
+			$form->options['element'] = $options['fakeElement'];
 		}
 
 		if($options['allPaths'])
@@ -1403,7 +1414,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$return = $file->elaboraPath();
 
 		if($options['fakeElement']){
-			$file->options['element'] = $this;
+			$form->options['element'] = $this;
 		}
 
 		return $return;
@@ -1456,13 +1467,17 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				}
 			}
 
-			foreach ($this->settings['files'] as $k => $f) {
-				$paths = $this->getFilePath($k, ['allPaths' => true]);
-				$newPaths = $this->getFilePath($k, ['allPaths' => true, 'fakeElement' => $newEl]);
+			$form = $this->getForm();
+			$dataset = $form->getDataset();
+			foreach ($dataset as $k => $f) {
+				if($f->options['type']==='file'){
+					$paths = $this->getFilePath($k, ['allPaths' => true]);
+					$newPaths = $this->getFilePath($k, ['allPaths' => true, 'fakeElement' => $newEl]);
 
-				foreach ($paths as $i => $p) {
-					if (file_exists(INCLUDE_PATH . $p)) {
-						copy(INCLUDE_PATH . $p, INCLUDE_PATH . $newPaths[$i]);
+					foreach ($paths as $i => $p) {
+						if (file_exists(INCLUDE_PATH . $p)) {
+							copy(INCLUDE_PATH . $p, INCLUDE_PATH . $newPaths[$i]);
+						}
 					}
 				}
 			}
