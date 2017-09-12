@@ -1434,6 +1434,28 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$newEl = $this->model->_ORM->create(get_class($this), ['table' => $this->settings['table']]);
 			$newEl->save($data);
 
+			if($this->model->isLoaded('Multilang')){
+				$mlTable = $this->model->_Multilang->getTableFor($this->settings['table']);
+				if($mlTable){
+					$mlOptions = $this->model->_Multilang->getTableOptionsFor($this->settings['table']);
+					foreach($this->model->_Multilang->langs as $lang){
+						$row = $this->model->_Db->select($mlTable, [
+							$mlOptions['keyfield'] => $this['id'],
+							$mlOptions['lang'] => $lang,
+						]);
+
+						unset($row['id']);
+						unset($row[$mlOptions['keyfield']]);
+						unset($row[$mlOptions['lang']]);
+
+						$this->model->_Db->update($mlTable, [
+							$mlOptions['keyfield'] => $newEl['id'],
+							$mlOptions['lang'] => $lang,
+						], $row);
+					}
+				}
+			}
+
 			foreach ($this->settings['files'] as $k => $f) {
 				$paths = $this->getFilePath($k, ['allPaths' => true]);
 				$newPaths = $this->getFilePath($k, ['allPaths' => true, 'fakeElement' => $newEl]);
