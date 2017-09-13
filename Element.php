@@ -58,7 +58,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	public function __construct($data, array $settings=array()){
 		$this->settings = array_merge([
-			'table' => $this::$table,
+			'table' => null,
 			'primary' => 'id',
 			'parent' => false,
 			'pre_loaded' => false,
@@ -70,6 +70,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			'fields' => [], // For the form module
 			'model' => false,
 		], $settings);
+
+		if($this->settings['table']===null)
+			$this->settings['table'] = $this::$table;
 
 		if(!is_array($data)){
 			$data = [

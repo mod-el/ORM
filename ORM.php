@@ -59,13 +59,16 @@ class ORM extends Module{
 	 * @param array $options
 	 * @return Element|bool
 	 */
-	public function one($element, $where=false, array $options=array()){
+	public function one($element, $where = false, array $options = []){
 		$options = array_merge([
-			'model'=>$this->model,
-			'clone'=>false,
+			'model' => $this->model,
+			'table' => null,
+			'clone' => false,
 		], $options);
 
-		$table = $element::$table;
+		$table = $options['table'];
+		if(!$table)
+			$table = $element::$table;
 		if($table){
 			if(is_array($where)){
 				$sel = $this->model->_Db->select($table, $where, $options);
@@ -108,7 +111,7 @@ class ORM extends Module{
 	 * @param array $options
 	 * @return Element
 	 */
-	public function create($element, array $options=array()){
+	public function create($element, array $options = []){
 		return $this->one($element, false, $options);
 	}
 
@@ -121,15 +124,23 @@ class ORM extends Module{
 	 * @param array $options
 	 * @return array|ElementsIterator
 	 */
-	public function all($element, $where=array(), array $options=array()){
-		$table = $element::$table;
+	public function all($element, $where = [], array $options = []){
+		$options = array_merge([
+			'table' => null,
+		], $options);
+
+		$table = $options['table'];
+		if(!$table)
+			$table = $element::$table;
 		if(!$table)
 			$this->model->error('Error.', 'Class "'.$element.'" has no table.');
 
 		$tree = $this->getElementsTree();
-		$el_data = $tree['elements'][$element];
-		if($el_data['order_by'] and (!isset($options['order_by']) or !$options['order_by']))
-			$options['order_by'] = $this->stringOrderBy($el_data['order_by']);
+		if(isset($tree['elements'][$element])) {
+			$el_data = $tree['elements'][$element];
+			if ($el_data['order_by'] and (!isset($options['order_by']) or !$options['order_by']))
+				$options['order_by'] = $this->stringOrderBy($el_data['order_by']);
+		}
 
 		$q = $this->model->_Db->select_all($table, $where, $options);
 		if(isset($options['stream']) and $options['stream']){
@@ -155,10 +166,11 @@ class ORM extends Module{
 	 *
 	 * @param string $element
 	 * @param int|bool $id
+	 * @param array $options
 	 * @return bool|Element
 	 */
-	public function loadMainElement($element, $id){
-		$this->element = $this->one($element, $id);
+	public function loadMainElement($element, $id, array $options = []){
+		$this->element = $this->one($element, $id, $options);
 		return $this->element;
 	}
 
