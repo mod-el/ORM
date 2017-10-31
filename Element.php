@@ -175,11 +175,13 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	/**
 	 * Returns the current array of data, except the primary key
 	 *
+	 * @param bool $removePrimary
 	 * @return array
 	 */
-	public function getData(){
+	public function getData($removePrimary = false){
 		$data = $this->data_arr;
-		unset($data[$this->settings['primary']]);
+		if($removePrimary)
+			unset($data[$this->settings['primary']]);
 		return $data;
 	}
 
@@ -1434,7 +1436,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		try {
 			$this->model->_Db->beginTransaction();
 
-			$data = $this->getData();
+			$data = $this->getData(true);
 
 			$autoIncrements = array_keys($this->ar_autoIncrement);
 			foreach ($autoIncrements as $k) {
