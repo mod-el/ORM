@@ -179,6 +179,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @return array
 	 */
 	public function getData($removePrimary = false){
+		$this->load();
 		$data = $this->data_arr;
 		if($removePrimary)
 			unset($data[$this->settings['primary']]);
