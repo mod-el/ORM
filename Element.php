@@ -256,6 +256,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			'fields' => [], // Fields for each one of the children
 			'files' => [], // Files for each one of the children
 			'duplicable' => true, // Can be duplicated?
+			'primary' => 'id', // Primary field in the children table
 		], $options);
 
 		if($options['field']===null){
@@ -500,12 +501,12 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					if(count($where)>1)
 						$q = $this->model->_Db->select_all($child['assoc']['table'], $where, $read_options);
 					else
-						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$this->settings['primary']], $read_options);
+						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$this->settings['primary']], $child['primary'], $read_options);
 
 					$this->children_ar[$i] = array();
 					foreach($q as $c){
 						$options['assoc'] = $c;
-						$new_child = new $child['element']($c[$child['assoc']['field']], array('parent' => $this, 'model' => $this->model, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i.'-'.$c['id'], 'files' => $child['files'], 'fields' => $child['fields']));
+						$new_child = new $child['element']($c[$child['assoc']['field']], ['parent' => $this, 'model' => $this->model, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i.'-'.$c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						$this->children_ar[$i][$c['id']] = $new_child;
 					}
 				}else{
@@ -520,14 +521,14 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					if(count($where)>1)
 						$q = $this->model->_Db->select_all($child['table'], $where, $read_options);
 					else
-						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['table'], $child['field'], $this->data_arr[$this->settings['primary']], $read_options);
+						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['table'], $child['field'], $this->data_arr[$this->settings['primary']], $child['primary'], $read_options);
 
 					$this->children_ar[$i] = array();
 					foreach($q as $c){
 						if(isset($this->settings['pre_loaded_children'][$i][$c['id']])){
 							$this->children_ar[$i][$c['id']] = $this->settings['pre_loaded_children'][$i][$c['id']];
 						}else{
-							$this->children_ar[$i][$c['id']] = new $child['element']($c, array('parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields']));
+							$this->children_ar[$i][$c['id']] = new $child['element']($c, ['parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						}
 					}
 				}
