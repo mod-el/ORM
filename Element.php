@@ -236,30 +236,29 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Sets the rules for a set of children
 	 *
 	 * @param string $name
-	 * @param array|string|bool $options
+	 * @param array|string $options
 	 */
-	protected function has($name, $options=array()){
+	protected function has($name, $options = []){
 		if(!is_array($options))
-			$options = array('element' => $options);
+			$options = ['element' => $options];
 
-		$options = array_merge(array(
+		$options = array_merge([
 			'type' => 'multiple', // "multiple" o "single"
-			'element' => '\\Model\\Element', // Tipo di elemento
-			'table' => false, // Tabella da cui leggere... se non viene fornita si cercherà di leggerla dall'elemento (in mancanza di questo, assumerà il valore di $name per convenzione)
-			'field' => false, // Per i tipi "single", il campo di quest'elemento a cui sono legati - per i "multiple", il campo della loro tabella che usano per legarsi a quest'elemento (se non viene fornito, di default è: per i single il nome del children, per i multiple il nome di quest'elemento tutto minuscolo)
-			'direct' => true, // Figlio diretto? Ad esempio, "camera" di un "hotel", quella camera appartiene solo a quell'hotel e non ad altri - se muore l'hotel muore la camera; mentre ad esempio non è diretto "città" di un "utente", che appartiene a quell'utente ma potenzialmente anche ad altri
-			'where' => array(), // Eventuali filtri da utilizzare (solo per "multiple")
-			'joins' => array(), // Eventuali join da effettuare
-			'order_by' => false, // Se ordinarli secondo un particolare campo
-			'save' => false, // Se impostato a true, l'estensione SavingElement cercherà eventuali dati in ingresso da salvare anche relativi a questo children
-			'save-costraints' => [], // Campi che è obbligatorio aver inserito affinché il salvataggio di una riga avvenga
-			'assoc' => false, // Alcuni particolari tipi di children passano per una tabella che fa da mediazione "molti a molti", qui si può specificare qual è (array con le seguenti opzioni: table, parent, field, where*, order_by*) *opzionali
-			'files' => array(), // Ognuno dei children ha eventuali file collegati?
-			'fields' => array(), // Ognuno dei children ha eventuali campi personalizzati?
-			'duplicable' => true,
-		), $options);
+			'element' => '\\Model\\Element', // Element class
+			'table' => null, // Table to read from - it it's not given, it's read from the Element or, if not possible, from the variable $name
+			'field' => null, // For "single" relations, it's the name of this element to use as primary id - for "multiple" relations, it's the field of the table of the children; defaults: "single": name of the child, "multiple": name of this element
+			'where' => [], // Filters for the select query
+			'joins' => [], // Joins for the select query
+			'order_by' => false, // Order by (as in SQL)
+			'save' => false, // If true, there will be an attempt to save the children when saving the element
+			'save-costraints' => [], // If save == true, this fields will be checked as mandatory, and the child will not be saved if one of them is empty
+			'assoc' => false, // Settings for a "many to many" relationshipt (array with these fields: table, parent, field, where*, order_by*) *not mandatory
+			'fields' => [], // Fields for each one of the children
+			'files' => [], // Files for each one of the children
+			'duplicable' => true, // Can be duplicated?
+		], $options);
 
-		if($options['field']===false){
+		if($options['field']===null){
 			switch($options['type']){
 				case 'single':
 					$options['field'] = strtolower($name);
@@ -270,7 +269,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			}
 		}
 
-		if($options['table']===false){
+		if($options['table']===null){
 			if($options['element']!='\\Model\\Element')
 				$options['table'] = $this->getElementTable($options['element']);
 			else
