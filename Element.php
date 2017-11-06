@@ -115,11 +115,11 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			if(!isset($this->children_ar[$k]))
 				$this->children_ar[$k] = false;
 
-			if($child['type']=='multiple' and $child['table'] and isset($this->data_arr[$child['parent_field']])){
+			if($child['type']=='multiple' and $child['table'] and isset($this->data_arr[$this->settings['primary']])){
 				if($child['assoc']){
-					$this->model->_ORM->registerChildrenLoading($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$child['parent_field']]);
+					$this->model->_ORM->registerChildrenLoading($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$this->settings['primary']]);
 				}else{
-					$this->model->_ORM->registerChildrenLoading($child['table'], $child['field'], $this->data_arr[$child['parent_field']]);
+					$this->model->_ORM->registerChildrenLoading($child['table'], $child['field'], $this->data_arr[$this->settings['primary']]);
 				}
 			}
 		}
@@ -254,7 +254,6 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			'save' => false, // Se impostato a true, l'estensione SavingElement cercherà eventuali dati in ingresso da salvare anche relativi a questo children
 			'save-costraints' => [], // Campi che è obbligatorio aver inserito affinché il salvataggio di una riga avvenga
 			'assoc' => false, // Alcuni particolari tipi di children passano per una tabella che fa da mediazione "molti a molti", qui si può specificare qual è (array con le seguenti opzioni: table, parent, field, where*, order_by*) *opzionali
-			'parent_field' => 'id', // Probabilmente non verrà mai modificata, ma non si sa mai... rappresenta il campo da usare come id in questo elemento, a cui anche i children fanno riferimento
 			'files' => array(), // Ognuno dei children ha eventuali file collegati?
 			'fields' => array(), // Ognuno dei children ha eventuali campi personalizzati?
 			'duplicable' => true,
@@ -496,13 +495,13 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 				if($child['assoc']){
 					$where = isset($child['assoc']['where']) ? $child['assoc']['where'] : array();
-					$where[$child['assoc']['parent']] = $this->data_arr[$child['parent_field']];
+					$where[$child['assoc']['parent']] = $this->data_arr[$this->settings['primary']];
 					if(isset($child['assoc']['order_by'])) $read_options['order_by'] = $child['assoc']['order_by'];
 					if(isset($child['assoc']['joins'])) $read_options['joins'] = $child['assoc']['joins'];
 					if(count($where)>1)
 						$q = $this->model->_Db->select_all($child['assoc']['table'], $where, $read_options);
 					else
-						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$child['parent_field']], $read_options);
+						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$this->settings['primary']], $read_options);
 
 					$this->children_ar[$i] = array();
 					foreach($q as $c){
@@ -515,14 +514,14 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						return false;
 
 					$where = $child['where'];
-					$where[$child['field']] = $this->data_arr[$child['parent_field']];
+					$where[$child['field']] = $this->data_arr[$this->settings['primary']];
 					if($child['order_by']) $read_options['order_by'] = $child['order_by'];
 					if($child['joins']) $read_options['joins'] = $child['joins'];
 
 					if(count($where)>1)
 						$q = $this->model->_Db->select_all($child['table'], $where, $read_options);
 					else
-						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['table'], $child['field'], $this->data_arr[$child['parent_field']], $read_options);
+						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['table'], $child['field'], $this->data_arr[$this->settings['primary']], $read_options);
 
 					$this->children_ar[$i] = array();
 					foreach($q as $c){
@@ -590,7 +589,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						return false;
 
 					$data = $child['where'];
-					$data[$child['field']] = $this->data_arr[$child['parent_field']];
+					$data[$child['field']] = $this->data_arr[$this->settings['primary']];
 					$data['id'] = $id;
 
 					return new $child['element']($data, array('parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'options' => $options, 'child_el' => $i.'-'.$id, 'files' => $child['files'], 'fields' => $child['fields']));
