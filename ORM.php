@@ -220,10 +220,11 @@ class ORM extends Module{
 	 *
 	 * @param string $table
 	 * @param string $parent_field
+	 * @param string $primary
 	 * @param array $read_options
 	 * @return bool
 	 */
-	private function loadChildrenLoadingCache($table, $parent_field, array $read_options){
+	private function loadChildrenLoadingCache($table, $parent_field, $primary, array $read_options){
 		if(!isset($this->children_loading[$table]) or !isset($this->children_loading[$table][$parent_field]))
 			return false;
 
@@ -232,17 +233,17 @@ class ORM extends Module{
 
 		$read_options['stream'] = true;
 		if(!isset($read_options['order_by']))
-			$read_options['order_by'] = 'id';
+			$read_options['order_by'] = $primary;
 
 		if(count($this->children_loading[$table][$parent_field]['hasToLoad'])==1){
-			$q = $this->model->_Db->select_all($table, array($parent_field=>$this->children_loading[$table][$parent_field]['hasToLoad'][0]), $read_options);
+			$q = $this->model->_Db->select_all($table, [$parent_field=>$this->children_loading[$table][$parent_field]['hasToLoad'][0]], $read_options);
 		}else{
 			$q = $this->model->_Db->select_all($table, [
 				$parent_field => ['in', $this->children_loading[$table][$parent_field]['hasToLoad']],
 			], $read_options);
 		}
 		foreach($q as $r)
-			$this->children_loading[$table][$parent_field]['results'][$r['id']] = $r;
+			$this->children_loading[$table][$parent_field]['results'][$r[$primary]] = $r;
 
 		$this->children_loading[$table][$parent_field]['hasToLoad'] = array();
 
@@ -255,15 +256,16 @@ class ORM extends Module{
 	 * @param string $table
 	 * @param string $parent_field
 	 * @param int $parent
+	 * @param string $primary
 	 * @param array $read_options
 	 * @return array
 	 */
-	public function loadFromChildrenLoadingCache($table, $parent_field, $parent, array $read_options=array()){
+	public function loadFromChildrenLoadingCache($table, $parent_field, $parent, $primary, array $read_options=array()){
 		if(!isset($this->children_loading[$table]) or !isset($this->children_loading[$table][$parent_field]))
 			return array();
 
 		if(count($this->children_loading[$table][$parent_field]['hasToLoad'])>0)
-			$this->loadChildrenLoadingCache($table, $parent_field, $read_options);
+			$this->loadChildrenLoadingCache($table, $parent_field, $primary, $read_options);
 
 		$return = array();
 		foreach($this->children_loading[$table][$parent_field]['results'] as $r){
