@@ -1306,7 +1306,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param string|bool $ch
 	 * @return array|bool
 	 */
-	private function getDataKeys($ch=false){
+	public function getDataKeys($ch = false){
 		if($ch===false){
 			$table = $this->settings['table'];
 		}else{
