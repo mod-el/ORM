@@ -1416,7 +1416,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		if($options['allPaths'])
 			$return = $file->getPaths();
 		else
-			$return = $file->elaboraPath();
+			$return = $file->getPath();
 
 		if($options['fakeElement']){
 			$form->options['element'] = $this;
