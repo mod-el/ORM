@@ -1063,7 +1063,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				$form = $this->getForm();
 				$dataset = $form->getDataset();
 				foreach($dataset as $k => $d){
-					$d->save(isset($data[$k]) ? $data[$k] : null);
+					if(array_key_exists($k, $data))
+						$d->save($data[$k]);
 				}
 
 				if($options['children']){
@@ -1071,7 +1072,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						if(!$ch['save'])
 							continue;
 
-						$keys = $this->getDataKeys($ck);
+						$dummy = $this->create($ck);
+						$dummyForm = $dummy->getForm();
+						$keys = array_keys($dummyForm->getDataset());
 
 						switch($ch['type']){
 							case 'single':
@@ -1303,19 +1306,10 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	/**
 	 * Returns the data keys that actually exist (false on failure)
 	 *
-	 * @param string|bool $ch
 	 * @return array|bool
 	 */
-	public function getDataKeys($ch = false){
-		if($ch===false){
-			$table = $this->settings['table'];
-		}else{
-			if($this->children_setup[$ch]['assoc'])
-				$table = $this->children_setup[$ch]['assoc']['table'];
-			else
-				$table = $this->children_setup[$ch]['table'];
-		}
-		$tableModel = $this->model->_Db ? $this->model->_Db->getTable($table) : false;
+	public function getDataKeys(){
+		$tableModel = $this->model->_Db ? $this->model->_Db->getTable($this->settings['table']) : false;
 		if(!$tableModel)
 			return false;
 		$columns = $tableModel->columns;
