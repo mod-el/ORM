@@ -10,15 +10,15 @@ class ORM_Config extends Module_Config {
 	 * @return bool
 	 */
 	public function makeCache(){
-		if(!is_dir(INCLUDE_PATH.'data'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'))
-			mkdir(INCLUDE_PATH.'data'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM');
+		if(!is_dir(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'))
+			mkdir(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM');
 
-		$dir = opendir(INCLUDE_PATH.'data'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM');
+		$dir = opendir(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM');
 		$elementsNames = array();
 		while($f = readdir($dir)){
 			if($f=='.' or $f=='..') continue;
-			$name = pathinfo('data'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.$f, PATHINFO_FILENAME);
-			include_once(INCLUDE_PATH.'data'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.$f);
+			$name = pathinfo('app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.$f, PATHINFO_FILENAME);
+			include_once(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.$f);
 			$elementsNames[] = $name;
 		}
 		closedir($dir);
@@ -71,7 +71,7 @@ $controllers = '.var_export($controllers, true).';
 	public function getClasses(){
 		$classes = [];
 
-		$files = glob(INCLUDE_PATH.'data'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.'*');
+		$files = glob(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.'*');
 		foreach($files as $f){
 			$file = pathinfo($f);
 			if($file['basename']=='config.php')
