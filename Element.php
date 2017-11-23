@@ -1,5 +1,4 @@
-<?php
-namespace Model;
+<?php namespace Model\ORM;
 
 class Element implements \JsonSerializable, \ArrayAccess{
 	/** @var array */
@@ -14,9 +13,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	public $settings;
 	/** @var array */
 	public $options;
-	/** @var Core */
+	/** @var \Model\Core\Core */
 	public $model;
-	/** @var Form */
+	/** @var \Model\Form\Form */
 	protected $form;
 	/** @var bool */
 	protected $loaded = false;
@@ -244,7 +243,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		$options = array_merge([
 			'type' => 'multiple', // "multiple" o "single"
-			'element' => '\\Model\\Element', // Element class
+			'element' => '\\Model\\ORM\\Element', // Element class
 			'table' => null, // Table to read from - it it's not given, it's read from the Element or, if not possible, from the variable $name
 			'field' => null, // For "single" relations, it's the name of this element to use as primary id - for "multiple" relations, it's the field of the table of the children; defaults: "single": name of the child, "multiple": name of this element
 			'where' => [], // Filters for the select query
@@ -334,7 +333,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Method to load the element - it's automatically called every time the user tries to access any of the properties, or it can be called manually as well
 	 *
 	 * @param array|bool $options
-	 * @throws ZkException
+	 * @throws \Model\Core\ZkException
 	 */
 	public function load($options=false){
 		if($options!==false)
@@ -344,7 +343,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		if(!$this->loaded){
 			if($this->model===false)
-				throw new ZkException('Model not provided for an istance of '.get_class($this));
+				throw new \Model\Core\ZkException('Model not provided for an istance of '.get_class($this));
 
 			$this->exists = true;
 			if(!$this->settings['pre_loaded']){
@@ -772,7 +771,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	/**
 	 * Integration with Form module
 	 *
-	 * @return Form
+	 * @return \Model\Form\Form
 	 */
 	public function getForm(){
 		if(!$this->model->moduleExists('Form'))
@@ -781,7 +780,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		if(!$this->form){
 			$this->load();
 
-			$this->form = new Form([
+			$this->form = new \Model\Form\Form([
 				'table' => $this->settings['table'],
 				'element' => $this,
 				'model' => $this->model,

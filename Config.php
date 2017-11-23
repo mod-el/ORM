@@ -1,7 +1,8 @@
-<?php
-namespace Model;
+<?php namespace Model\ORM;
 
-class ORM_Config extends Module_Config {
+use Model\Core\Module_Config;
+
+class Config extends Module_Config {
 	public $configurable = true;
 
 	/**
