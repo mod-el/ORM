@@ -1,7 +1,8 @@
-<?php
-namespace Model;
+<?php namespace Model\ORM;
 
-class ORM extends Module{
+use Model\Core\Module;
+
+class ORM extends Module {
 	/** @var Element */
 	public $element;
 	/** @var array */
