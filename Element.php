@@ -270,7 +270,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		}
 
 		if($options['table']===null){
-			if($options['element']!='\\Model\\Element')
+			if($options['element']!='\\Model\\ORM\\Element')
 				$options['table'] = $this->getElementTable($options['element']);
 			else
 				$options['table'] = $name;
@@ -482,7 +482,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					break;
 				}
 
-				if($child['element']!='\\Model\\Element')
+				if($child['element']!='\\Model\\ORM\\Element')
 					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->data_arr[$child['field']], array('options' => $options, 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']));
 				elseif($child['table'])
 					$this->children_ar[$i] = new $child['element']($this->model->_Db->select($child['table'], $this->data_arr[$child['field']]), array('parent' => $this, 'model' => $this->model, 'options' => $options, 'joins' => $child['joins'], 'table' => $child['table'], 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields']));
