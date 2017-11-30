@@ -1,5 +1,5 @@
 <?php
-class ORMController extends \Model\Controller {
+class ORMController extends \Model\Core\Controller {
 	function index(){
 		try {
 			$this->model->_Db->beginTransaction();
@@ -16,7 +16,7 @@ class ORMController extends \Model\Controller {
 				$this->model->error('Invalid data format.');
 
 			$className = $this->model->getRequest(1);
-			if ($className and class_exists($className) and is_subclass_of($className, '\\Model\\Element')) {
+			if ($className and class_exists($className) and is_subclass_of($className, '\\Model\\ORM\\Element')) {
 				$id = $this->model->getRequest(2);
 				if (!is_numeric($id) or $id <= 0)
 					$this->model->error('Invalid ID');
