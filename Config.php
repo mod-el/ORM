@@ -14,6 +14,7 @@ class Config extends Module_Config {
 	public function makeCache(){
 		$elementsData = Autoloader::getFilesByType('Element');
 
+		$elements = [];
 		foreach($elementsData as $name => $className){
 			$obj = new $className(false, ['model' => $this->model]);
 			$elements[$name] = $obj->getElementTreeData();
