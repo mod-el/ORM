@@ -1,5 +1,6 @@
 <?php namespace Model\ORM;
 
+use Model\Core\Autoloader;
 use Model\Core\Module_Config;
 
 class Config extends Module_Config {
@@ -11,27 +12,15 @@ class Config extends Module_Config {
 	 * @return bool
 	 */
 	public function makeCache(){
-		if(!is_dir(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'))
-			mkdir(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM');
+		$elementsData = Autoloader::getFilesByType('Element');
 
-		$dir = opendir(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM');
-		$elementsNames = array();
-		while($f = readdir($dir)){
-			if($f=='.' or $f=='..') continue;
-			$name = pathinfo('app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.$f, PATHINFO_FILENAME);
-			include_once(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.$f);
-			$elementsNames[] = $name;
-		}
-		closedir($dir);
-
-		$elements = array();
-		foreach($elementsNames as $name){
-			$obj = new $name(false, array('model'=>$this->model));
+		foreach($elementsData as $name => $className){
+			$obj = new $className(false, ['model' => $this->model]);
 			$elements[$name] = $obj->getElementTreeData();
 		}
 
-		$controllers = array();
-		foreach($elements as $el=>$data){
+		$controllers = [];
+		foreach($elements as $el => $data){
 			if($data['parent'] and $data['parent']['element'] and !$data['parent']['children'] and isset($elements[$data['parent']['element']])){
 				$found = false; $unique = true;
 				foreach($elements[$data['parent']['element']]['children'] as $p_ch_k=>$p_ch){
@@ -65,30 +54,12 @@ $controllers = '.var_export($controllers, true).';
 	}
 
 	/**
-	 * Returns all Elements name, in order to be registered by the Core
-	 *
-	 * @return array
-	 */
-	public function getClasses(){
-		$classes = [];
-
-		$files = glob(INCLUDE_PATH.'app'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.'*');
-		foreach($files as $f){
-			$file = pathinfo($f);
-			if($file['basename']=='config.php')
-				continue;
-			$classes[$file['filename']] = $f;
-		}
-
-		return $classes;
-	}
-
-	/**
 	 * Saves configuration
 	 *
 	 * @param string $type
 	 * @param array $dati
 	 * @return bool
+	 * @throws \Model\Core\ZkException
 	 */
 	public function saveConfig($type, array $dati){
 		$dati = array_map(function($v){
