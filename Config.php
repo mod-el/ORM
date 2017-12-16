@@ -122,7 +122,7 @@ $controllers = '.var_export($controllers, true).';
 	 * @return null|string
 	 */
 	public function getTemplate(array $request){
-		return $request[2]=='config' ? INCLUDE_PATH.'model'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR.'elements' : null;
+		return $request[2]=='config' ? 'elements' : null;
 	}
 
 	/**
