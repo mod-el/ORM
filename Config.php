@@ -15,9 +15,11 @@ class Config extends Module_Config {
 		$elementsData = Autoloader::getFilesByType('Element');
 
 		$elements = [];
-		foreach($elementsData as $name => $className){
-			$obj = new $className(false, ['model' => $this->model]);
-			$elements[$name] = $obj->getElementTreeData();
+		foreach($elementsData as $moduleName => $classes){
+			foreach($classes as $name => $className){
+				$obj = new $className(false, ['model' => $this->model]);
+				$elements[$name] = $obj->getElementTreeData();
+			}
 		}
 
 		$controllers = [];
@@ -120,7 +122,7 @@ $controllers = '.var_export($controllers, true).';
 	 * @return null|string
 	 */
 	public function getTemplate(array $request){
-		return $request[2]=='config' ? INCLUDE_PATH.'model'.DIRECTORY_SEPARATOR.'ORM'.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR.'elements' : null;
+		return $request[2]=='config' ? 'elements' : null;
 	}
 
 	/**
