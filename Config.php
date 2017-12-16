@@ -15,9 +15,11 @@ class Config extends Module_Config {
 		$elementsData = Autoloader::getFilesByType('Element');
 
 		$elements = [];
-		foreach($elementsData as $name => $className){
-			$obj = new $className(false, ['model' => $this->model]);
-			$elements[$name] = $obj->getElementTreeData();
+		foreach($elementsData as $moduleName => $classes){
+			foreach($classes as $name => $className){
+				$obj = new $className(false, ['model' => $this->model]);
+				$elements[$name] = $obj->getElementTreeData();
+			}
 		}
 
 		$controllers = [];
