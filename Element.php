@@ -1438,7 +1438,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @return Element
 	 * @throws \Exception
 	 */
-	public function duplicate(array $replace=[]){
+	public function duplicate(array $replace = []){
 		try {
 			$this->model->_Db->beginTransaction();
 
@@ -1453,7 +1453,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$data = array_merge($data, $this->replaceInDuplicate);
 			$data = array_merge($data, $replace);
 
-			$newEl = $this->model->_ORM->create(get_class($this), ['table' => $this->settings['table']]);
+			$newEl = $this->model->_ORM->create((new \ReflectionClass($this))->getShortName(), ['table' => $this->settings['table']]);
 			$newEl->save($data);
 
 			if($this->model->isLoaded('Multilang')){
@@ -1466,14 +1466,16 @@ class Element implements \JsonSerializable, \ArrayAccess{
 							$mlOptions['lang'] => $lang,
 						]);
 
-						unset($row['id']);
-						unset($row[$mlOptions['keyfield']]);
-						unset($row[$mlOptions['lang']]);
+						if($row){
+							unset($row['id']);
+							unset($row[$mlOptions['keyfield']]);
+							unset($row[$mlOptions['lang']]);
 
-						$this->model->_Db->update($mlTable, [
-							$mlOptions['keyfield'] => $newEl['id'],
-							$mlOptions['lang'] => $lang,
-						], $row);
+							$this->model->_Db->update($mlTable, [
+								$mlOptions['keyfield'] => $newEl['id'],
+								$mlOptions['lang'] => $lang,
+							], $row);
+						}
 					}
 				}
 			}

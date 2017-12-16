@@ -424,6 +424,9 @@ class ORM extends Module {
 	 * @throws \Model\Core\ZkException
 	 */
 	private function getNamespacedElement($element){
+		if($element==='Element')
+			return '\\Model\\ORM\\Element';
+
 		$namespacedElement = Autoloader::searchFile('Element', $element);
 		if(!$namespacedElement)
 			$this->model->error('Element '.$element.' not found');
