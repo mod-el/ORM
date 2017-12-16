@@ -59,6 +59,7 @@ class ORM extends Module {
 	 * @param array|int|bool $where
 	 * @param array $options
 	 * @return Element|bool
+	 * @throws \Model\Core\ZkException
 	 */
 	public function one($element, $where = false, array $options = []){
 		$options = array_merge([
@@ -111,6 +112,7 @@ class ORM extends Module {
 	 * @param string $element
 	 * @param array $options
 	 * @return Element
+	 * @throws \Model\Core\ZkException
 	 */
 	public function create($element, array $options = []){
 		return $this->one($element, false, $options);
@@ -124,6 +126,7 @@ class ORM extends Module {
 	 * @param mixed $where
 	 * @param array $options
 	 * @return array|ElementsIterator
+	 * @throws \Model\Core\ZkException
 	 */
 	public function all($element, $where = [], array $options = []){
 		$options = array_merge([
@@ -169,6 +172,7 @@ class ORM extends Module {
 	 * @param int|bool $id
 	 * @param array $options
 	 * @return bool|Element
+	 * @throws \Model\Core\ZkException
 	 */
 	public function loadMainElement($element, $id, array $options = []){
 		$this->element = $this->one($element, $id, $options);
@@ -319,6 +323,7 @@ class ORM extends Module {
 	 * @param bool $method
 	 * @param array $data
 	 * @return bool
+	 * @throws \Model\Core\ZkException
 	 */
 	function isAPIActionAuthorized($className, $id, $method=false, array $data=[]){
 		if(DEBUG_MODE)
