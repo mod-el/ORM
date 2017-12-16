@@ -1,5 +1,6 @@
 <?php namespace Model\ORM;
 
+use Model\Core\Autoloader;
 use Model\Core\Module;
 
 class ORM extends Module {
@@ -68,6 +69,8 @@ class ORM extends Module {
 			'clone' => false,
 		], $options);
 
+		$element = $this->getNamespacedElement($element);
+
 		$table = $options['table'];
 		if(!$table)
 			$table = $element::$table;
@@ -132,6 +135,8 @@ class ORM extends Module {
 		$options = array_merge([
 			'table' => null,
 		], $options);
+
+		$element = $this->getNamespacedElement($element);
 
 		$table = $options['table'];
 		if(!$table)
@@ -325,7 +330,7 @@ class ORM extends Module {
 	 * @return bool
 	 * @throws \Model\Core\ZkException
 	 */
-	function isAPIActionAuthorized($className, $id, $method=false, array $data=[]){
+	public function isAPIActionAuthorized($className, $id, $method=false, array $data=[]){
 		if(DEBUG_MODE)
 			return true;
 
@@ -401,5 +406,27 @@ class ORM extends Module {
 		}
 
 		return true;
+	}
+
+	/**
+	 * @param string $element
+	 * @return string
+	 * @throws \Model\Core\ZkException
+	 */
+	public function getTableFor($element){
+		$element = $this->getNamespacedElement($element);
+		return $element::$table;
+	}
+
+	/**
+	 * @param string $element
+	 * @return string
+	 * @throws \Model\Core\ZkException
+	 */
+	private function getNamespacedElement($element){
+		$namespacedElement = Autoloader::searchFile('Element', $element);
+		if(!$namespacedElement)
+			$this->model->error('Element '.$element.' not found');
+		return $namespacedElement;
 	}
 }
