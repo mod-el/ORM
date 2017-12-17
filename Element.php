@@ -508,7 +508,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$this->children_ar[$i] = array();
 					foreach($q as $c){
 						$options['assoc'] = $c;
-						$new_child = new $child['element']($c[$child['assoc']['field']], ['parent' => $this, 'model' => $this->model, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i.'-'.$c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+						$new_child = $this->model->_ORM->one($child['element'], $c[$child['assoc']['field']], ['clone' => true, 'parent' => $this, 'model' => $this->model, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i.'-'.$c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						$this->children_ar[$i][$c['id']] = $new_child;
 					}
 				}else{
@@ -530,7 +530,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						if(isset($this->settings['pre_loaded_children'][$i][$c['id']])){
 							$this->children_ar[$i][$c['id']] = $this->settings['pre_loaded_children'][$i][$c['id']];
 						}else{
-							$this->children_ar[$i][$c['id']] = new $child['element']($c, ['parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+							$this->children_ar[$i][$c['id']] = $this->model->_ORM->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						}
 					}
 				}
