@@ -176,7 +176,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 *
 	 * @param bool $removePrimary
 	 * @return array
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function getData($removePrimary = false){
 		$this->load();
@@ -334,7 +334,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Method to load the element - it's automatically called every time the user tries to access any of the properties, or it can be called manually as well
 	 *
 	 * @param array|bool $options
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function load($options=false){
 		if($options!==false)
@@ -344,7 +344,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		if(!$this->loaded){
 			if($this->model===false)
-				throw new \Model\Core\ZkException('Model not provided for an istance of '.get_class($this));
+				throw new \Model\Core\Exception('Model not provided for an istance of '.get_class($this));
 
 			$this->exists = true;
 			if(!$this->settings['pre_loaded']){
@@ -443,7 +443,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Implementation of JsonSerializable, for debugging purposes
 	 *
 	 * @return array
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function jsonSerialize(){
 		$this->load();
@@ -460,7 +460,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param bool $use_loader
 	 * @param array $options
 	 * @return bool
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	protected function loadChildren($i, $use_loader=true, array $options=array()){
 		if(!array_key_exists($i, $this->children_setup))
@@ -544,7 +544,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 *
 	 * @param string $i
 	 * @return array|null
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	protected function children($i){
 		if(!array_key_exists($i, $this->children_setup))
@@ -607,7 +607,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Does the element exists? (is an actual row in the database?)
 	 *
 	 * @return bool
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function exists(){
 		$this->load();
@@ -640,7 +640,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param array $options
 	 * @param bool $return
 	 * @return bool|string
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function render($template=false, array $options=array(), $return=false){
 		if(!$this->model->isLoaded('Output'))
@@ -679,7 +679,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Reloads the data from database
 	 *
 	 * @return bool
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function reload(){
 		if(!$this->settings['table'] or !isset($this->data_arr[$this->settings['primary']]))
@@ -699,7 +699,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param array $tags
 	 * @param array $opt
 	 * @return string|bool
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function getUrl(array $tags=[], array $opt=[]){
 		if($this::$controller===false)
@@ -734,7 +734,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Meant to work in conjunction with Meta module
 	 *
 	 * @return array
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function getMeta(){
 		$this->load();
@@ -781,7 +781,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Integration with Form module
 	 *
 	 * @return \Model\Form\Form
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function getForm(){
 		if(!$this->model->moduleExists('Form'))
@@ -876,7 +876,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param array $data
 	 * @param array $options
 	 * @return array
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function update(array $data, array $options = []){
 		$options = array_merge([
@@ -1331,7 +1331,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * Returns the data in order to make the cache
 	 *
 	 * @return array
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function getElementTreeData(){
 		$this->load();
@@ -1382,7 +1382,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param string|bool $fIdx
 	 * @param array $options
 	 * @return string|bool
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function getFilePath($fIdx = false, array $options = []){
 		$options = array_merge([
