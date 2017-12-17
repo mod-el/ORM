@@ -244,7 +244,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		$options = array_merge([
 			'type' => 'multiple', // "multiple" o "single"
-			'element' => '\\Model\\ORM\\Element', // Element class
+			'element' => 'Element', // Element class
 			'table' => null, // Table to read from - it it's not given, it's read from the Element or, if not possible, from the variable $name
 			'field' => null, // For "single" relations, it's the name of this element to use as primary id - for "multiple" relations, it's the field of the table of the children; defaults: "single": name of the child, "multiple": name of this element
 			'where' => [], // Filters for the select query
@@ -265,14 +265,14 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$options['field'] = strtolower($name);
 					break;
 				case 'multiple':
-					$options['field'] = strtolower(preg_replace('/(?<!^)([A-Z])/', '_\\1', get_class($this)));
+					$options['field'] = strtolower(preg_replace('/(?<!^)([A-Z])/', '_\\1', $this->getClassShortName()));
 					break;
 			}
 		}
 
 		if($options['table']===null){
-			if($options['element']!='\\Model\\ORM\\Element')
-				$options['table'] = $this->getElementTable($options['element']);
+			if($options['element']!='Element')
+				$options['table'] = $this->model->_ORM->getTableFor($options['element']);
 			else
 				$options['table'] = $name;
 		}
@@ -485,7 +485,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					break;
 				}
 
-				if($child['element']!='\\Model\\ORM\\Element')
+				if($child['element']!=='Element')
 					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->data_arr[$child['field']], array('options' => $options, 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']));
 				elseif($child['table'])
 					$this->children_ar[$i] = new $child['element']($this->model->_Db->select($child['table'], $this->data_arr[$child['field']]), array('parent' => $this, 'model' => $this->model, 'options' => $options, 'joins' => $child['joins'], 'table' => $child['table'], 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields']));
@@ -508,7 +508,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 					$this->children_ar[$i] = array();
 					foreach($q as $c){
 						$options['assoc'] = $c;
-						$new_child = new $child['element']($c[$child['assoc']['field']], ['parent' => $this, 'model' => $this->model, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i.'-'.$c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+						$new_child = $this->model->_ORM->one($child['element'], $c[$child['assoc']['field']], ['clone' => true, 'parent' => $this, 'model' => $this->model, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i.'-'.$c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						$this->children_ar[$i][$c['id']] = $new_child;
 					}
 				}else{
@@ -530,7 +530,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						if(isset($this->settings['pre_loaded_children'][$i][$c['id']])){
 							$this->children_ar[$i][$c['id']] = $this->settings['pre_loaded_children'][$i][$c['id']];
 						}else{
-							$this->children_ar[$i][$c['id']] = new $child['element']($c, ['parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+							$this->children_ar[$i][$c['id']] = $this->model->_ORM->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'model' => $this->model, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						}
 					}
 				}
@@ -642,23 +642,25 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @return bool|string
 	 * @throws \Model\Core\Exception
 	 */
-	public function render($template=false, array $options=array(), $return=false){
+	public function render($template = false, array $options = [], $return = false){
 		if(!$this->model->isLoaded('Output'))
 			return false;
 
 		$this->load();
 
+		$classShortName = $this->getClassShortName();
+
 		if($template===false)
-			$template_file = get_class($this);
+			$template_file = $classShortName;
 		else
-			$template_file = get_class($this).'-'.$template;
+			$template_file = $classShortName.'-'.$template;
 
 		if($return)
 			ob_start();
 
 		$seek = $this->model->_Output->findTemplateFile('elements'.DIRECTORY_SEPARATOR.$template_file);
 		if($seek){
-			include(INCLUDE_PATH.$seek['path']);
+			include($seek['path']);
 		}else{
 			if($return)
 				return ob_end_clean();
@@ -712,22 +714,6 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		}
 
 		return $this->model->getUrl($this::$controller, $this['id'], $tags, $opt);
-	}
-
-	/**
-	 * Returns the table for a particular Element or (if none is given) for this one
-	 *
-	 * @param string|bool $element
-	 * @return string|bool
-	 */
-	protected function getElementTable($element=false){
-		if($element===false)
-			return $this->settings['table'];
-
-		if(!class_exists($element))
-			die('Error: class '.$element.' does not exist.');
-
-		return $element::$table;
 	}
 
 	/**
@@ -1453,7 +1439,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$data = array_merge($data, $this->replaceInDuplicate);
 			$data = array_merge($data, $replace);
 
-			$newEl = $this->model->_ORM->create((new \ReflectionClass($this))->getShortName(), ['table' => $this->settings['table']]);
+			$newEl = $this->model->_ORM->create($this->getClassShortName(), ['table' => $this->settings['table']]);
 			$newEl->save($data);
 
 			if($this->model->isLoaded('Multilang')){
@@ -1519,5 +1505,12 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	protected function duplicableWith(array $replace){
 		$this->replaceInDuplicate = $replace;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getClassShortName(){
+		return (new \ReflectionClass($this))->getShortName();
 	}
 }
