@@ -272,7 +272,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		if($options['table']===null){
 			if($options['element']!='\\Model\\ORM\\Element')
-				$options['table'] = $this->getElementTable($options['element']);
+				$options['table'] = $this->model->_ORM->getTableFor($options['element']);
 			else
 				$options['table'] = $name;
 		}
@@ -712,22 +712,6 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		}
 
 		return $this->model->getUrl($this::$controller, $this['id'], $tags, $opt);
-	}
-
-	/**
-	 * Returns the table for a particular Element or (if none is given) for this one
-	 *
-	 * @param string|bool $element
-	 * @return string|bool
-	 */
-	protected function getElementTable($element=false){
-		if($element===false)
-			return $this->settings['table'];
-
-		if(!class_exists($element))
-			die('Error: class '.$element.' does not exist.');
-
-		return $element::$table;
 	}
 
 	/**
