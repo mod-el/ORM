@@ -1,5 +1,8 @@
-<?php
-class ORMController extends \Model\Core\Controller {
+<?php namespace Model\ORM\Controllers;
+
+use Model\Core\Controller;
+
+class ORMController extends Controller {
 	function index(){
 		try {
 			$this->model->_Db->beginTransaction();

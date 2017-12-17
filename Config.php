@@ -62,7 +62,7 @@ $controllers = '.var_export($controllers, true).';
 	 * @param string $type
 	 * @param array $dati
 	 * @return bool
-	 * @throws \Model\Core\ZkException
+	 * @throws \Model\Core\Exception
 	 */
 	public function saveConfig($type, array $dati){
 		$dati = array_map(function($v){
