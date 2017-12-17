@@ -95,8 +95,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		if(is_object($this->settings['parent']) and (!$this->init_parent or !isset($this->init_parent['element']) or get_class($this->settings['parent'])==$this->init_parent['element']))
 			$this->parent = $this->settings['parent'];
 
-		$this->settings['files'] = array_merge($this::$files, $this->settings['files']);
-		$this->settings['fields'] = array_merge($this::$fields, $this->settings['fields']);
+		$this->settings['files'] = array_merge_recursive_distinct($this::$files, $this->settings['files']);
+		$this->settings['fields'] = array_merge_recursive_distinct($this::$fields, $this->settings['fields']);
 		foreach($this->settings['fields'] as $fk => $f){
 			if(!is_array($f))
 				$this->settings['fields'][$fk] = array('type' => $f);
@@ -342,7 +342,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 */
 	public function load($options=false){
 		if($options!==false)
-			$this->options = array_merge($this->options, $options);
+			$this->options = array_merge_recursive_distinct($this->options, $options);
 
 		$this->beforeLoad($this->options);
 
@@ -835,7 +835,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						$opt['type'] = 'password';
 
 					if(array_key_exists($ck, $this->settings['fields']))
-						$opt = array_merge($opt, $this->settings['fields'][$ck]);
+						$opt = array_merge_recursive_distinct($opt, $this->settings['fields'][$ck]);
 					$opt['child_el'] = $this->settings['child_el'];
 					if(isset($opt['show']) and !$opt['show'])
 						continue;
@@ -1229,11 +1229,13 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 		$nome_el = Autoloader::searchFile('Element', $this->children_setup[$ch]['element']);
 		$fields = ($nome_el and isset($nome_el::$fields)) ? $nome_el::$fields : [];
+		$fields = array_merge_recursive_distinct($fields, $this->children_setup[$ch]['fields']);
 
 		foreach($fields as $k => $t){ // I look for the checkboxes, they behave in a different way in post data: if the key exists, it's 1, otherwise 0
 			if(!is_array($t))
-				$t = array('type' => $t);
-			if($t['type']!='checkbox') continue;
+				$t = ['type' => $t];
+			if(!isset($t['type']) or $t['type']!='checkbox')
+				continue;
 			if($id===false){
 				$arr[$k] = isset($data['ch-'.$k.'-'.$ch]) ? $data['ch-'.$k.'-'.$ch] : 0;
 			}else{
