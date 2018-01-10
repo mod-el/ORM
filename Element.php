@@ -1523,4 +1523,15 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	protected function getClassShortName(){
 		return (new \ReflectionClass($this))->getShortName();
 	}
+
+	/**
+	 * @param string $ch
+	 * @return array
+	 */
+	public function getChildrenOptions($ch){
+		if(isset($this->children_setup[$ch]))
+			return $this->children_setup[$ch];
+		else
+			return null;
+	}
 }
