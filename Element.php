@@ -8,9 +8,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	/** @var array */
 	public $data_arr;
 	/** @var array */
-	protected $db_data_arr = array();
+	protected $db_data_arr = [];
 	/** @var array */
-	public $children_ar = array();
+	public $children_ar = [];
 	/** @var Element|bool */
 	public $parent = false;
 	/** @var array */
@@ -31,9 +31,9 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	/** @var string|bool */
 	public static $table = false;
 	/** @var array */
-	public static $fields = array();
+	public static $fields = [];
 	/** @var array */
-	public static $files = array();
+	public static $files = [];
 	/** @var string|bool */
 	public static $controller = false;
 
@@ -41,14 +41,14 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	/** @var array|bool */
 	protected $init_parent = false;
 	/** @var array */
-	protected $children_setup = array();
+	protected $children_setup = [];
 
 	/** @var array */
-	protected $ar_autoIncrement = array();
+	protected $ar_autoIncrement = [];
 	/** @var array */
-	protected $ar_orderBy = array();
+	protected $ar_orderBy = [];
 	/** @var array */
-	protected $replaceInDuplicate = array();
+	protected $replaceInDuplicate = [];
 
 	/** @var bool */
 	protected $_flagSaving = false; // It will assure the afterSave method will be called only once, even if save is re-called in it
@@ -59,7 +59,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param mixed $data
 	 * @param array $settings
 	 */
-	public function __construct($data, array $settings=array()){
+	public function __construct($data, array $settings = []){
 		$this->settings = array_merge([
 			'table' => null,
 			'primary' => 'id',
@@ -156,8 +156,8 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 			$this->children_ar[$k] = false;
 		}
-		$this->settings = array();
-		$this->data_arr = array();
+		$this->settings = [];
+		$this->data_arr = [];
 		$this->exists = false;
 		$this->loaded = false;
 		$this->destroyed = true;
@@ -290,7 +290,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param $el
 	 * @param array $options
 	 */
-	protected function belongsTo($el, array $options=array()){
+	protected function belongsTo($el, array $options = []){
 		$options = array_merge(array(
 			'element' => $el,
 			'field' => false,
@@ -307,7 +307,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param string $field
 	 * @param array $options
 	 */
-	protected function autoIncrement($field, array $options=array()){
+	protected function autoIncrement($field, array $options = []){
 		$this->ar_autoIncrement[$field] = array_merge(array(
 			'depending_on' => false,
 		), $options);
@@ -319,7 +319,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param string $field
 	 * @param array $options
 	 */
-	protected function orderBy($field, array $options=array()){
+	protected function orderBy($field, array $options = []){
 		$this->ar_orderBy[$field] = array_merge(array(
 			'depending_on' => false,
 		), $options);
@@ -428,7 +428,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	private function autoLoadParent(){
 		if($this->parent===false and $this->init_parent!==false){
 			if(array_key_exists($this->init_parent['field'], $this->data_arr) and $this->data_arr[$this->init_parent['field']]){
-				$settings = array();
+				$settings = [];
 				if($this->init_parent['children']){
 					$settings = [
 						'pre_loaded_children' => [
@@ -500,7 +500,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 				$read_options = [];
 
 				if($child['assoc']){
-					$where = isset($child['assoc']['where']) ? $child['assoc']['where'] : array();
+					$where = isset($child['assoc']['where']) ? $child['assoc']['where'] : [];
 					$where[$child['assoc']['parent']] = $this->data_arr[$this->settings['primary']];
 					if(isset($child['assoc']['order_by'])) $read_options['order_by'] = $child['assoc']['order_by'];
 					if(isset($child['assoc']['joins'])) $read_options['joins'] = $child['assoc']['joins'];
@@ -711,7 +711,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @return string|bool
 	 * @throws \Model\Core\Exception
 	 */
-	public function getUrl(array $tags=[], array $opt=[]){
+	public function getUrl(array $tags = [], array $opt = []){
 		if($this::$controller===false)
 			return false;
 
@@ -903,7 +903,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			$multilangKeys = $this->model->_Multilang->tables[$this->settings['table']]['fields'];
 		}
 
-		$saving = array();
+		$saving = [];
 		foreach($data as $k => $v){
 			if(in_array($k, $multilangKeys)){ // In case of multilang columns, I only update the current language in the element
 				$column = $multilangTableModel->columns[$k];
@@ -1009,7 +1009,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 			if($this->exists()){
 				$previous_data = $this->db_data_arr;
 
-				$real_save = array();
+				$real_save = [];
 				foreach($saving as $k => $v){ // Only data that actually changed will be saved
 					if(!array_key_exists($k, $this->db_data_arr) or $k=='zkversion' or is_array($v) or $db->quote($this->db_data_arr[$k])!==$db->quote($v))
 						$real_save[$k] = $v;
@@ -1038,7 +1038,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 				foreach($this->ar_autoIncrement as $k => $opt){
 					if(!isset($saving[$k]) or !$saving[$k]){
-						$where = array();
+						$where = [];
 						if($opt['depending_on']){
 							if(!is_array($opt['depending_on'])){
 								$opt['depending_on'] = array($opt['depending_on']);
@@ -1214,7 +1214,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @return array
 	 */
 	private function getChildrenData(array $data, array $keys, $ch, $id=false){
-		$arr = array();
+		$arr = [];
 		foreach($data as $k => $v){
 			foreach($keys as $kk){
 				if($id===false){
