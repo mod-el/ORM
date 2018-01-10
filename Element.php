@@ -168,6 +168,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 *
 	 * @param $i
 	 * @return mixed|null
+	 * @throws \Model\Core\Exception
 	 */
 	public function __get($i){
 		if(array_key_exists($i, $this->children_setup))
