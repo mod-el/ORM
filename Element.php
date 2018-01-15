@@ -986,6 +986,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		$options = array_merge([
 			'checkboxes' => false,
 			'children' => false,
+			'version' => null,
 		], $options);
 
 		$dati_orig = $data;
@@ -1027,7 +1028,11 @@ class Element implements \JsonSerializable, \ArrayAccess{
 						}
 					}
 
-					$updating = $db->update($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]], $real_save);
+					$updating = $db->update($this->settings['table'], [
+						$this->settings['primary'] => $this->data_arr[$this->settings['primary']],
+					], $real_save, [
+						'version' => $options['version'],
+					]);
 					if($updating===false)
 						return false;
 

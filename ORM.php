@@ -36,18 +36,6 @@ class ORM extends Module {
 				unset($CLC);
 			}
 		});
-
-		$this->model->on('Db_zkversion_update', function($data){
-			foreach($this->objects_cache as $className => $elements){
-				$table = $className::$table;
-				if($table===$data['table']){
-					foreach($data['rows'] as $id){
-						if(isset($elements[$id]))
-							$elements[$id]->update(['zkversion'=>$data['version']]);
-					}
-				}
-			}
-		});
 	}
 
 	/**
