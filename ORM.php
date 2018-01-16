@@ -16,7 +16,7 @@ class ORM extends Module {
 	/**
 	 * @param mixed $options
 	 */
-	function init($options){
+	function init(array $options){
 		$this->methods = array(
 			'one',
 			'create',
@@ -302,7 +302,7 @@ class ORM extends Module {
 	 * @param string $rule
 	 * @return array
 	 */
-	public function getController(array $request, $rule){
+	public function getController(array $request, string $rule){
 		return [
 			'controller'=>'ORM',
 		];

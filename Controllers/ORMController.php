@@ -7,7 +7,7 @@ class ORMController extends Controller {
 		try {
 			$this->model->_Db->beginTransaction();
 
-			if (!DEBUG_MODE and !checkCsrf())
+			if (!DEBUG_MODE and !$this->model->_CSRF->checkCsrf())
 				$this->model->error('CSRF detected! Unauthorized.');
 
 			$data = $this->model->getInput('data');

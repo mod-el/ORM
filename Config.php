@@ -11,7 +11,7 @@ class Config extends Module_Config {
 	 *
 	 * @return bool
 	 */
-	public function makeCache(){
+	public function makeCache(): bool{
 		$elementsData = Autoloader::getFilesByType('Element');
 
 		$elements = [];
@@ -60,56 +60,57 @@ $controllers = '.var_export($controllers, true).';
 	 * Saves configuration
 	 *
 	 * @param string $type
-	 * @param array $dati
+	 * @param array $data
 	 * @return bool
 	 * @throws \Model\Core\Exception
 	 */
-	public function saveConfig($type, array $dati){
-		$dati = array_map(function($v){
+	public function saveConfig(string $type, array $data): bool
+	{
+		$data = array_map(function($v){
 			$v = trim($v);
 			return ($v!=='' ? $v : null);
-		}, $dati);
+		}, $data);
 
 		$permissions = $this->model->_Db->select_all('zk_orm_permissions');
 		foreach($permissions as $perm){
-			if(!array_key_exists($perm['id'].'-user_idx', $dati) or !array_key_exists($perm['id'].'-user_id', $dati) or !array_key_exists($perm['id'].'-function', $dati) or !array_key_exists($perm['id'].'-element', $dati) or !array_key_exists($perm['id'].'-permissions', $dati))
+			if(!array_key_exists($perm['id'].'-user_idx', $data) or !array_key_exists($perm['id'].'-user_id', $data) or !array_key_exists($perm['id'].'-function', $data) or !array_key_exists($perm['id'].'-element', $data) or !array_key_exists($perm['id'].'-permissions', $data))
 				continue;
 
-			if(isset($dati[$perm['id'].'-delete'])){
+			if(isset($data[$perm['id'].'-delete'])){
 				$this->model->_Db->delete('zk_orm_permissions', $perm['id']);
 			}else{
-				if(empty($dati[$perm['id'].'-permissions']))
-					$dati[$perm['id'].'-permissions'] = '{}';
+				if(empty($data[$perm['id'].'-permissions']))
+					$data[$perm['id'].'-permissions'] = '{}';
 
-				$test = json_decode($dati[$perm['id'].'-permissions'], true);
+				$test = json_decode($data[$perm['id'].'-permissions'], true);
 				if($test===null)
 					$this->model->error('Permissions value is not a valid JSON object.');
 
 				$data = [
-					'user_idx'=>$dati[$perm['id'].'-user_idx'],
-					'user_id'=>$dati[$perm['id'].'-user_id'],
-					'function'=>$dati[$perm['id'].'-function'],
-					'element'=>$dati[$perm['id'].'-element'],
-					'permissions'=>$dati[$perm['id'].'-permissions'],
+					'user_idx'=>$data[$perm['id'].'-user_idx'],
+					'user_id'=>$data[$perm['id'].'-user_id'],
+					'function'=>$data[$perm['id'].'-function'],
+					'element'=>$data[$perm['id'].'-element'],
+					'permissions'=>$data[$perm['id'].'-permissions'],
 				];
 				$this->model->_Db->update('zk_orm_permissions', $perm['id'], $data);
 			}
 		}
 
-		if(!empty($dati['new-element']) or (!empty($dati['new-permissions']) and $dati['new-permissions']!='{}')){
-			if(empty($dati['new-permissions']))
-				$dati['new-permissions'] = '{}';
+		if(!empty($data['new-element']) or (!empty($data['new-permissions']) and $data['new-permissions']!='{}')){
+			if(empty($data['new-permissions']))
+				$data['new-permissions'] = '{}';
 
-			$test = json_decode($dati['new-permissions'], true);
+			$test = json_decode($data['new-permissions'], true);
 			if($test===null)
 				$this->model->error('Permissions value is not a valid JSON object.');
 
 			$data = [
-				'user_idx'=>$dati['new-user_idx'],
-				'user_id'=>$dati['new-user_id'],
-				'function'=>$dati['new-function'],
-				'element'=>$dati['new-element'],
-				'permissions'=>$dati['new-permissions'],
+				'user_idx'=>$data['new-user_idx'],
+				'user_id'=>$data['new-user_id'],
+				'function'=>$data['new-function'],
+				'element'=>$data['new-element'],
+				'permissions'=>$data['new-permissions'],
 			];
 			$this->model->_Db->insert('zk_orm_permissions', $data);
 		}
@@ -129,7 +130,8 @@ $controllers = '.var_export($controllers, true).';
 	 * @param array $data
 	 * @return mixed
 	 */
-	public function install(array $data = []){
+	public function install(array $data = []): bool
+	{
 		return $this->model->_Db->query('CREATE TABLE IF NOT EXISTS `zk_orm_permissions` (
 		  `id` int(11) NOT NULL AUTO_INCREMENT,
 		  `user_idx` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -146,7 +148,8 @@ $controllers = '.var_export($controllers, true).';
 	 *
 	 * @return array
 	 */
-	public function getRules(){
+	public function getRules(): array
+	{
 		return [
 			'rules'=>[
 				'element'=>'element',
