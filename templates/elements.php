@@ -718,7 +718,7 @@ function in_array(needle, haystack, argStrict){
 <h2>ORM module configuration</h2>
 
 <form action="" method="post">
-	<?php csrfInput(); ?>
+	<?php $this->model->_CSRF->csrfInput(); ?>
     <h3>API permissions</h3>
     <table style="width: 100%">
         <tr style="color: #2693FF">
