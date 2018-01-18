@@ -2,8 +2,10 @@
 
 use Model\Core\Controller;
 
-class ORMController extends Controller {
-	function index(){
+class ORMController extends Controller
+{
+	function index()
+	{
 		try {
 			$this->model->_Db->beginTransaction();
 
@@ -11,11 +13,11 @@ class ORMController extends Controller {
 				$this->model->error('CSRF detected! Unauthorized.');
 
 			$data = $this->model->getInput('data');
-			if(!$data)
+			if (!$data)
 				$data = '{}';
 
 			$data = json_decode($data, true);
-			if($data===null)
+			if ($data === null)
 				$this->model->error('Invalid data format.');
 
 			$className = $this->model->getRequest(1);
@@ -49,7 +51,7 @@ class ORMController extends Controller {
 			}
 		} catch (Exception $e) {
 			$this->model->_Db->rollBack();
-			$this->model->sendJSON(['err'=>getErr($e)]);
+			$this->model->sendJSON(['err' => getErr($e)]);
 		}
 	}
 }
