@@ -52,7 +52,7 @@ class ORM extends Module
 	 * @return Element|bool
 	 * @throws \Model\Core\Exception
 	 */
-	public function one($element, $where = false, array $options = [])
+	public function one(string $element, $where = false, array $options = [])
 	{
 		$options = array_merge([
 			'model' => $this->model,
@@ -108,7 +108,7 @@ class ORM extends Module
 	 * @return Element
 	 * @throws \Model\Core\Exception
 	 */
-	public function create($element, array $options = [])
+	public function create(string $element, array $options = []): Element
 	{
 		return $this->one($element, false, $options);
 	}
@@ -118,12 +118,12 @@ class ORM extends Module
 	 * If "stream" options is set, returns an ElementsIterator
 	 *
 	 * @param string $element
-	 * @param mixed $where
+	 * @param array $where
 	 * @param array $options
 	 * @return array|ElementsIterator
 	 * @throws \Model\Core\Exception
 	 */
-	public function all($element, $where = [], array $options = [])
+	public function all(string $element, array $where = [], array $options = [])
 	{
 		$options = array_merge([
 			'table' => null,
@@ -169,10 +169,10 @@ class ORM extends Module
 	 * @param string $element
 	 * @param int|bool $id
 	 * @param array $options
-	 * @return bool|Element
+	 * @return Element
 	 * @throws \Model\Core\Exception
 	 */
-	public function loadMainElement($element, $id, array $options = [])
+	public function loadMainElement(string $element, $id, array $options = []): Element
 	{
 		$this->element = $this->one($element, $id, $options);
 		return $this->element;
@@ -184,7 +184,7 @@ class ORM extends Module
 	 * @param array $orderBy
 	 * @return string
 	 */
-	private function stringOrderBy(array $orderBy)
+	private function stringOrderBy(array $orderBy): string
 	{
 		$arr = array();
 		foreach ($orderBy as $field => $opt) {
@@ -206,7 +206,7 @@ class ORM extends Module
 	 * @param int $id
 	 * @return bool
 	 */
-	public function registerChildrenLoading($table, $parent_field, $id)
+	public function registerChildrenLoading(string $table, string $parent_field, int $id): bool
 	{
 		if (!isset($this->children_loading[$table]))
 			$this->children_loading[$table] = array();
@@ -230,7 +230,7 @@ class ORM extends Module
 	 * @param array $read_options
 	 * @return bool
 	 */
-	private function loadChildrenLoadingCache($table, $parent_field, $primary, array $read_options)
+	private function loadChildrenLoadingCache(string $table, string $parent_field, string $primary, array $read_options): bool
 	{
 		if (!isset($this->children_loading[$table]) or !isset($this->children_loading[$table][$parent_field]))
 			return false;
@@ -267,15 +267,15 @@ class ORM extends Module
 	 * @param array $read_options
 	 * @return array
 	 */
-	public function loadFromChildrenLoadingCache($table, $parent_field, $parent, $primary, array $read_options = array())
+	public function loadFromChildrenLoadingCache(string $table, string $parent_field, int $parent, string $primary, array $read_options = []): array
 	{
 		if (!isset($this->children_loading[$table]) or !isset($this->children_loading[$table][$parent_field]))
-			return array();
+			return [];
 
 		if (count($this->children_loading[$table][$parent_field]['hasToLoad']) > 0)
 			$this->loadChildrenLoadingCache($table, $parent_field, $primary, $read_options);
 
-		$return = array();
+		$return = [];
 		foreach ($this->children_loading[$table][$parent_field]['results'] as $r) {
 			if ($r[$parent_field] == $parent)
 				$return[] = $r;
@@ -325,12 +325,12 @@ class ORM extends Module
 	 *
 	 * @param string $className
 	 * @param int $id
-	 * @param bool $method
+	 * @param string $method
 	 * @param array $data
 	 * @return bool
 	 * @throws \Model\Core\Exception
 	 */
-	public function isAPIActionAuthorized($className, $id, $method = false, array $data = [])
+	public function isAPIActionAuthorized(string $className, int $id, string $method = null, array $data = []): bool
 	{
 		if (DEBUG_MODE)
 			return true;
@@ -393,10 +393,10 @@ class ORM extends Module
 		if (isset($permissions['*']))
 			return true;
 
-		if ($method !== false and !array_key_exists($method, $permissions))
+		if ($method !== null and !array_key_exists($method, $permissions))
 			return false;
 
-		if ($method !== false and is_array($permissions[$method])) {
+		if ($method !== null and is_array($permissions[$method])) {
 			if (!isAssoc($data))
 				$data = $data[0];
 
@@ -414,7 +414,7 @@ class ORM extends Module
 	 * @return string
 	 * @throws \Model\Core\Exception
 	 */
-	public function getTableFor($element)
+	public function getTableFor(string $element): string
 	{
 		$element = $this->getNamespacedElement($element);
 		return $element::$table;
@@ -425,7 +425,7 @@ class ORM extends Module
 	 * @return string
 	 * @throws \Model\Core\Exception
 	 */
-	private function getNamespacedElement($element)
+	private function getNamespacedElement(string $element): string
 	{
 		if ($element === 'Element')
 			return '\\Model\\ORM\\Element';

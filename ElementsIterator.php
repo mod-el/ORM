@@ -1,5 +1,7 @@
 <?php namespace Model\ORM;
 
+use Model\Core\Core;
+
 class ElementsIterator implements \Iterator, \Countable
 {
 	/** @var string */
@@ -20,7 +22,7 @@ class ElementsIterator implements \Iterator, \Countable
 	 * @param \PDOStatement $q
 	 * @param \Model\Core\Core $model
 	 */
-	public function __construct($element, $q, $model)
+	public function __construct(string $element, \PDOStatement $q, Core $model)
 	{
 		$this->element = $element;
 		$this->q = $q;
