@@ -1,6 +1,7 @@
 <?php namespace Model\ORM;
 
-class ElementsIterator implements \Iterator, \Countable {
+class ElementsIterator implements \Iterator, \Countable
+{
 	/** @var string */
 	private $element;
 	/** @var \PDOStatement */
@@ -19,7 +20,8 @@ class ElementsIterator implements \Iterator, \Countable {
 	 * @param \PDOStatement $q
 	 * @param \Model\Core\Core $model
 	 */
-	public function __construct($element, $q, $model){
+	public function __construct($element, $q, $model)
+	{
 		$this->element = $element;
 		$this->q = $q;
 		$this->cursor = 0;
@@ -30,14 +32,16 @@ class ElementsIterator implements \Iterator, \Countable {
 	/**
 	 * Escamotage in order to be used in a foreach
 	 */
-	public function rewind(){
+	public function rewind()
+	{
 		$this->fetchNext();
 	}
 
 	/**
 	 * Escamotage in order to be used in a foreach
 	 */
-	public function current(){
+	public function current()
+	{
 		return $this->current;
 	}
 
@@ -46,15 +50,17 @@ class ElementsIterator implements \Iterator, \Countable {
 	 *
 	 * @return int
 	 */
-	public function key(){
+	public function key()
+	{
 		return $this->cursor;
 	}
 
 	/**
 	 * Moves the cursor forward
 	 */
-	public function next(){
-		if($this->current){
+	public function next()
+	{
+		if ($this->current) {
 			$this->current = null;
 			gc_collect_cycles();
 		}
@@ -66,17 +72,19 @@ class ElementsIterator implements \Iterator, \Countable {
 	/**
 	 * Fetches the next Element
 	 */
-	public function fetchNext(){
+	public function fetchNext()
+	{
 		$data = $this->q->fetch();
 		$type = $this->element;
-		$this->current = $data!==false ? new $type($data, array('model'=>$this->model, 'pre_loaded'=>true)) : false;
+		$this->current = $data !== false ? new $type($data, array('model' => $this->model, 'pre_loaded' => true)) : false;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function valid(){
-		if($this->current or $this->current===null)
+	public function valid()
+	{
+		if ($this->current or $this->current === null)
 			return true;
 		else
 			return false;
@@ -85,7 +93,8 @@ class ElementsIterator implements \Iterator, \Countable {
 	/**
 	 * @return int
 	 */
-	public function count(){
+	public function count()
+	{
 		return $this->q->rowCount();
 	}
 }
