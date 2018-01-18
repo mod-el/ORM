@@ -1088,7 +1088,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 						switch($ch['type']){
 							case 'single':
-								$saving = $this->getChildrenData($dati_orig, $keys, $ck);
+								$saving = $this->getChildrenData($dati_orig, $keys, $ck, null, $options['checkboxes']);
 
 								if($saving){
 									foreach($ch['save-costraints'] as $sck){
@@ -1102,7 +1102,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 										$new_el = $this->model->_ORM->create($ch['element'], ['table' => $ch['table']]);
 										$new_id = $new_el->save($saving);
 										$this->children_ar[$ck] = $new_el;
-										$this->save(array($ch['field'] => $new_id), $options);
+										$this->save([$ch['field'] => $new_id], $options);
 									}
 								}
 								break;
@@ -1111,7 +1111,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 									foreach($this->{$ck} as $c_id => $c){
 										if(isset($dati_orig['ch-'.$ck.'-'.$c_id])){
 											if($dati_orig['ch-'.$ck.'-'.$c_id]){
-												$saving = $this->getChildrenData($dati_orig, $keys, $ck, $c_id);
+												$saving = $this->getChildrenData($dati_orig, $keys, $ck, $c_id, $options['checkboxes']);
 												foreach($ch['save-costraints'] as $sck){
 													if(!isset($saving[$sck]) or $saving[$sck]===null or $saving[$sck]==='')
 														continue 2;
@@ -1127,7 +1127,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 									$new = 0;
 									while(isset($dati_orig['ch-'.$ck.'-new'.$new])){
 										if(!$dati_orig['ch-'.$ck.'-new'.$new]){ $new++; continue; }
-										$saving = $this->getChildrenData($dati_orig, $keys, $ck, 'new'.$new);
+										$saving = $this->getChildrenData($dati_orig, $keys, $ck, 'new'.$new, $options['checkboxes']);
 										foreach($ch['save-costraints'] as $sck){
 											if(!isset($saving[$sck]) or $saving[$sck]===null or $saving[$sck]===''){
 												$new++;
@@ -1145,13 +1145,13 @@ class Element implements \JsonSerializable, \ArrayAccess{
 									foreach($this->{$ck} as $c_id => $c){
 										if(isset($dati_orig['ch-'.$ck.'-'.$c_id])){
 											if($dati_orig['ch-'.$ck.'-'.$c_id]){
-												$saving = $this->getChildrenData($dati_orig, $keys, $ck, $c_id);
+												$saving = $this->getChildrenData($dati_orig, $keys, $ck, $c_id, $options['checkboxes']);
 												foreach($ch['save-costraints'] as $sck){
 													if(!isset($saving[$sck]) or $saving[$sck]===null or $saving[$sck]==='')
 														continue 2;
 												}
 
-												$c->save($saving, $options);
+												$c->save($saving, ['checkboxes' => $options['checkboxes']]);
 											}else{
 												if($c->delete())
 													unset($this->children_ar[$ck][$c_id]);
@@ -1162,7 +1162,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 									$new = 0;
 									while(isset($dati_orig['ch-'.$ck.'-new'.$new])){
 										if(!$dati_orig['ch-'.$ck.'-new'.$new]){ $new++; continue; }
-										$saving = $this->getChildrenData($dati_orig, $keys, $ck, 'new'.$new);
+										$saving = $this->getChildrenData($dati_orig, $keys, $ck, 'new'.$new, $options['checkboxes']);
 										foreach($ch['save-costraints'] as $sck){
 											if(!isset($saving[$sck]) or $saving[$sck]===null or $saving[$sck]===''){
 												$new++;
@@ -1172,7 +1172,7 @@ class Element implements \JsonSerializable, \ArrayAccess{
 
 										$saving[$ch['field']] = $id;
 										$new_el = $this->create($ck, 'new'.$new);
-										$new_id = $new_el->save($saving, $options);
+										$new_id = $new_el->save($saving, ['checkboxes' => $options['checkboxes']]);
 										$this->children_ar[$ck][$new_id] = $new_el;
 										$new++;
 									}
@@ -1216,10 +1216,11 @@ class Element implements \JsonSerializable, \ArrayAccess{
 	 * @param array $data
 	 * @param array $keys
 	 * @param string $ch
-	 * @param bool|int $id
+	 * @param string $id
+	 * @param bool $checkboxes
 	 * @return array
 	 */
-	private function getChildrenData(array $data, array $keys, $ch, $id=false){
+	private function getChildrenData(array $data, array $keys, string $ch, string $id = null, bool $checkboxes = false){
 		$arr = [];
 		foreach($data as $k => $v){
 			foreach($keys as $kk){
@@ -1237,17 +1238,20 @@ class Element implements \JsonSerializable, \ArrayAccess{
 		$fields = ($nome_el and isset($nome_el::$fields)) ? $nome_el::$fields : [];
 		$fields = array_merge_recursive_distinct($fields, $this->children_setup[$ch]['fields']);
 
-		foreach($fields as $k => $t){ // I look for the checkboxes, they behave in a different way in post data: if the key exists, it's 1, otherwise 0
-			if(!is_array($t))
-				$t = ['type' => $t];
-			if(!isset($t['type']) or $t['type']!='checkbox')
-				continue;
-			if($id===false){
-				$arr[$k] = isset($data['ch-'.$k.'-'.$ch]) ? $data['ch-'.$k.'-'.$ch] : 0;
-			}else{
-				$arr[$k] = isset($data['ch-'.$k.'-'.$ch.'-'.$id]) ? $data['ch-'.$k.'-'.$ch.'-'.$id] : 0;
+		if($checkboxes){
+			foreach($fields as $k => $t){ // I look for the checkboxes, they behave in a different way in post data: if the key exists, it's 1, otherwise 0
+				if(!is_array($t))
+					$t = ['type' => $t];
+				if(!isset($t['type']) or $t['type']!='checkbox')
+					continue;
+				if($id === null){
+					$arr[$k] = isset($data['ch-'.$k.'-'.$ch]) ? $data['ch-'.$k.'-'.$ch] : 0;
+				}else{
+					$arr[$k] = isset($data['ch-'.$k.'-'.$ch.'-'.$id]) ? $data['ch-'.$k.'-'.$ch.'-'.$id] : 0;
+				}
 			}
 		}
+
 		return $arr;
 	}
 
