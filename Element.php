@@ -605,16 +605,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $i
 	 * @param int|string $id
 	 * @param array $options
-	 * @return bool
+	 * @return Element
+	 * @throws \Model\Core\Exception
 	 */
-	public function create(string $i, $id = 0, array $options = []): bool
+	public function create(string $i, $id = 0, array $options = []): Element
 	{
 		if (!array_key_exists($i, $this->children_setup))
-			return false;
+			$this->model->error('No children set named '.$i);
 		$child = $this->children_setup[$i];
 
 		if (!$child or !$child['table'])
-			return false;
+			$this->model->error('Can\'t create new child "'.$i.'", missing table in the configuration');
 
 		switch ($child['type']) {
 			case 'single':
@@ -632,7 +633,7 @@ class Element implements \JsonSerializable, \ArrayAccess
                     */
 				} else {
 					if (!$child['field'])
-						return false;
+						$this->model->error('Can\'t create new child "'.$i.'", missing field in the configuration');
 
 					$data = $child['where'];
 					$data[$child['field']] = $this->data_arr[$this->settings['primary']];
@@ -645,7 +646,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				break;
 		}
 
-		return false;
+		$this->model->error('Can\'t create new child "'.$i.'", probable wrong configuration');
 	}
 
 	/**
