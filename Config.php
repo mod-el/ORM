@@ -136,7 +136,7 @@ $controllers = ' . var_export($controllers, true) . ';
 	 */
 	public function install(array $data = []): bool
 	{
-		return $this->model->_Db->query('CREATE TABLE IF NOT EXISTS `zk_orm_permissions` (
+		$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `zk_orm_permissions` (
 		  `id` int(11) NOT NULL AUTO_INCREMENT,
 		  `user_idx` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
 		  `user_id` int(11) DEFAULT NULL,
@@ -145,6 +145,8 @@ $controllers = ' . var_export($controllers, true) . ';
 		  `permissions` text COLLATE utf8_unicode_ci NOT NULL,
 		  PRIMARY KEY (`id`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;');
+
+		return true;
 	}
 
 	/**
