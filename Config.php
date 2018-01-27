@@ -8,6 +8,19 @@ class Config extends Module_Config
 	public $configurable = true;
 
 	/**
+	 * @throws \Model\Core\Exception
+	 */
+	protected function assetsList()
+	{
+		$this->addAsset('data', 'elements-tree.php', function () {
+			return '<?php
+$elements = [];
+$controllers = [];
+';
+		});
+	}
+
+	/**
 	 * I create the $elements and $controllers array, trying to cache as many data as possible (which controller is associated to which Element, which table, which is the parent of which, etc...)
 	 *
 	 * @return bool
@@ -49,9 +62,6 @@ class Config extends Module_Config
 					$controllers[$data['controller']] = false; // Multipli elementi per lo stesso controller, ambiguità da risolvere a mano
 			}
 		}
-
-		if (!is_dir(__DIR__ . DIRECTORY_SEPARATOR . 'data'))
-			mkdir(__DIR__ . DIRECTORY_SEPARATOR . 'data');
 
 		return (bool)file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php', '<?php
 $elements = ' . var_export($elements, true) . ';
