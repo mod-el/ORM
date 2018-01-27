@@ -6,6 +6,7 @@ use Model\Core\Module_Config;
 class Config extends Module_Config
 {
 	public $configurable = true;
+	public $hasCleanUp = true;
 
 	/**
 	 * @throws \Model\Core\Exception
@@ -174,5 +175,54 @@ $controllers = ' . var_export($controllers, true) . ';
 				'ORM',
 			],
 		];
+	}
+
+	/**
+	 * Checks all elements with an "order by" field
+	 */
+	public function cleanUp()
+	{
+		if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php')) {
+			include(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php');
+
+			if (!isset($elements) or !is_array($elements))
+				return;
+
+			foreach ($elements as $el => $elData) {
+				if (!$elData['table'])
+					continue;
+
+				if ($elData['order_by']) {
+					foreach ($elData['order_by'] as $k => $ordData) {
+						if ($ordData['depending_on'])
+							$qryOrderBy = $ordData['depending_on'] . ',' . $k;
+						else
+							$qryOrderBy = $k;
+
+						$righe = $this->model->_Db->select_all($elData['table'], [], [
+							'order_by' => $qryOrderBy,
+							'stream' => true,
+						]);
+
+						$lastParent = null;
+						$currentOrder = 0;
+						foreach ($righe as $r) {
+							if ($ordData['depending_on'] and $r[$ordData['depending_on']] !== $lastParent) {
+								$lastParent = $r[$ordData['depending_on']];
+								$currentOrder = 0;
+							}
+
+							$currentOrder++;
+
+							if ($r[$k] != $currentOrder) {
+								$this->model->_Db->update($elData['table'], $r[$elData['primary']], [
+									$k => $currentOrder,
+								]);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }

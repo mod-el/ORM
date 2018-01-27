@@ -1415,6 +1415,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$this->load();
 		return [
 			'table' => $this->settings['table'],
+			'primary' => $this->settings['primary'],
 			'controller' => $this::$controller,
 			'children' => $this->children_setup,
 			'parent' => $this->init_parent,
