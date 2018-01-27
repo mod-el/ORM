@@ -6,6 +6,20 @@ use Model\Core\Module_Config;
 class Config extends Module_Config
 {
 	public $configurable = true;
+	public $hasCleanUp = true;
+
+	/**
+	 * @throws \Model\Core\Exception
+	 */
+	protected function assetsList()
+	{
+		$this->addAsset('data', 'elements-tree.php', function () {
+			return '<?php
+$elements = [];
+$controllers = [];
+';
+		});
+	}
 
 	/**
 	 * I create the $elements and $controllers array, trying to cache as many data as possible (which controller is associated to which Element, which table, which is the parent of which, etc...)
@@ -49,9 +63,6 @@ class Config extends Module_Config
 					$controllers[$data['controller']] = false; // Multipli elementi per lo stesso controller, ambiguità da risolvere a mano
 			}
 		}
-
-		if (!is_dir(__DIR__ . DIRECTORY_SEPARATOR . 'data'))
-			mkdir(__DIR__ . DIRECTORY_SEPARATOR . 'data');
 
 		return (bool)file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php', '<?php
 $elements = ' . var_export($elements, true) . ';
@@ -164,5 +175,54 @@ $controllers = ' . var_export($controllers, true) . ';
 				'ORM',
 			],
 		];
+	}
+
+	/**
+	 * Checks all elements with an "order by" field
+	 */
+	public function cleanUp()
+	{
+		if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php')) {
+			include(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php');
+
+			if (!isset($elements) or !is_array($elements))
+				return;
+
+			foreach ($elements as $el => $elData) {
+				if (!$elData['table'])
+					continue;
+
+				if ($elData['order_by']) {
+					foreach ($elData['order_by'] as $k => $ordData) {
+						if ($ordData['depending_on'])
+							$qryOrderBy = $ordData['depending_on'] . ',' . $k;
+						else
+							$qryOrderBy = $k;
+
+						$righe = $this->model->_Db->select_all($elData['table'], [], [
+							'order_by' => $qryOrderBy,
+							'stream' => true,
+						]);
+
+						$lastParent = null;
+						$currentOrder = 0;
+						foreach ($righe as $r) {
+							if ($ordData['depending_on'] and $r[$ordData['depending_on']] !== $lastParent) {
+								$lastParent = $r[$ordData['depending_on']];
+								$currentOrder = 0;
+							}
+
+							$currentOrder++;
+
+							if ($r[$k] != $currentOrder) {
+								$this->model->_Db->update($elData['table'], $r[$elData['primary']], [
+									$k => $currentOrder,
+								]);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
