@@ -307,6 +307,16 @@ class ORM extends Module
 	}
 
 	/**
+	 * @param string $element
+	 * @return array|null
+	 */
+	public function getElementData(string $element)
+	{
+		$elements_tree = $this->getElementsTree();
+		return $elements_tree['elements'][$element] ?? null;
+	}
+
+	/**
 	 * Controller for API actions
 	 *
 	 * @param array $request
