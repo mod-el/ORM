@@ -194,6 +194,9 @@ $controllers = ' . var_export($controllers, true) . ';
 
 				if ($elData['order_by']) {
 					foreach ($elData['order_by'] as $k => $ordData) {
+						if (!$ordData['custom'])
+							continue;
+
 						if ($ordData['depending_on'])
 							$qryOrderBy = $ordData['depending_on'] . ',' . $k;
 						else
