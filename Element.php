@@ -326,9 +326,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	protected function autoIncrement(string $field, array $options = [])
 	{
-		$this->ar_autoIncrement[$field] = array_merge(array(
+		$this->ar_autoIncrement[$field] = array_merge([
 			'depending_on' => false,
-		), $options);
+		], $options);
 	}
 
 	/**
@@ -339,9 +339,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	protected function orderBy(string $field, array $options = [])
 	{
-		$this->ar_orderBy[$field] = array_merge(array(
+		$this->ar_orderBy[$field] = array_merge([
+			'custom' => false,
 			'depending_on' => false,
-		), $options);
+		], $options);
 		$this->autoIncrement($field, $options);
 	}
 
@@ -611,11 +612,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function create(string $i, $id = 0, array $options = []): Element
 	{
 		if (!array_key_exists($i, $this->children_setup))
-			$this->model->error('No children set named '.$i);
+			$this->model->error('No children set named ' . $i);
 		$child = $this->children_setup[$i];
 
 		if (!$child or !$child['table'])
-			$this->model->error('Can\'t create new child "'.$i.'", missing table in the configuration');
+			$this->model->error('Can\'t create new child "' . $i . '", missing table in the configuration');
 
 		switch ($child['type']) {
 			case 'single':
@@ -633,7 +634,7 @@ class Element implements \JsonSerializable, \ArrayAccess
                     */
 				} else {
 					if (!$child['field'])
-						$this->model->error('Can\'t create new child "'.$i.'", missing field in the configuration');
+						$this->model->error('Can\'t create new child "' . $i . '", missing field in the configuration');
 
 					$data = $child['where'];
 					$data[$child['field']] = $this->data_arr[$this->settings['primary']];
@@ -646,7 +647,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				break;
 		}
 
-		$this->model->error('Can\'t create new child "'.$i.'", probable wrong configuration');
+		$this->model->error('Can\'t create new child "' . $i . '", probable wrong configuration');
 	}
 
 	/**
