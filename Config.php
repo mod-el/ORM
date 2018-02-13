@@ -192,36 +192,31 @@ $controllers = ' . var_export($controllers, true) . ';
 				if (!$elData['table'])
 					continue;
 
-				if ($elData['order_by']) {
-					foreach ($elData['order_by'] as $k => $ordData) {
-						if (!$ordData['custom'])
-							continue;
+				if ($elData['order_by'] and $elData['order_by']['custom']) {
+					if ($elData['order_by']['depending_on'])
+						$qryOrderBy = $elData['order_by']['depending_on'] . ',' . $elData['order_by']['field'];
+					else
+						$qryOrderBy = $elData['order_by']['field'];
 
-						if ($ordData['depending_on'])
-							$qryOrderBy = $ordData['depending_on'] . ',' . $k;
-						else
-							$qryOrderBy = $k;
+					$righe = $this->model->_Db->select_all($elData['table'], [], [
+						'order_by' => $qryOrderBy,
+						'stream' => true,
+					]);
 
-						$righe = $this->model->_Db->select_all($elData['table'], [], [
-							'order_by' => $qryOrderBy,
-							'stream' => true,
-						]);
+					$lastParent = null;
+					$currentOrder = 0;
+					foreach ($righe as $r) {
+						if ($elData['order_by']['depending_on'] and $r[$elData['order_by']['depending_on']] !== $lastParent) {
+							$lastParent = $r[$elData['order_by']['depending_on']];
+							$currentOrder = 0;
+						}
 
-						$lastParent = null;
-						$currentOrder = 0;
-						foreach ($righe as $r) {
-							if ($ordData['depending_on'] and $r[$ordData['depending_on']] !== $lastParent) {
-								$lastParent = $r[$ordData['depending_on']];
-								$currentOrder = 0;
-							}
+						$currentOrder++;
 
-							$currentOrder++;
-
-							if ($r[$k] != $currentOrder) {
-								$this->model->_Db->update($elData['table'], $r[$elData['primary']], [
-									$k => $currentOrder,
-								]);
-							}
+						if ($r[$elData['order_by']['field']] != $currentOrder) {
+							$this->model->_Db->update($elData['table'], $r[$elData['primary']], [
+								$elData['order_by']['field'] => $currentOrder,
+							]);
 						}
 					}
 				}
