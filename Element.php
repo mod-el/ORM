@@ -256,6 +256,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param string $name
 	 * @param array|string $options
+	 * @throws \Exception
 	 */
 	protected function has(string $name, $options = [])
 	{
@@ -339,7 +340,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	protected function orderBy(string $field, array $options = [])
 	{
-		$this->ar_orderBy[$field] = array_merge([
+		$this->ar_orderBy = array_merge([
+			'field' => $field,
 			'custom' => false,
 			'depending_on' => false,
 		], $options);
@@ -690,7 +692,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $options
 	 * @param bool $return
 	 * @return bool|string
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function render(string $template = null, array $options = [], bool $return = false)
 	{
@@ -1078,13 +1080,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				if (!empty($real_save)) {
-					foreach ($this->ar_orderBy as $k => $opt) { // If order parent was changed, I need to place the element at the end of the new list (and decrease the old list)
-						if ($opt['depending_on'] and isset($real_save[$opt['depending_on']])) {
-							$old_v = $this->db_data_arr[$opt['depending_on']];
-							$this->shiftOrder($k, $this->db_data_arr[$k], $old_v);
+					if ($this->ar_orderBy) { // If order parent was changed, I need to place the element at the end of the new list (and decrease the old list)
+						if ($this->ar_orderBy['depending_on'] and isset($real_save[$this->ar_orderBy['depending_on']])) {
+							$old_v = $this->db_data_arr[$this->ar_orderBy['depending_on']];
+							$this->shiftOrder($this->ar_orderBy['field'], $this->db_data_arr[$this->ar_orderBy['field']], $old_v);
 
-							$new_v = $real_save[$opt['depending_on']];
-							$real_save[$k] = ((int)$db->select($this->settings['table'], array($opt['depending_on'] => $new_v), array('max' => $k))) + 1;
+							$new_v = $real_save[$this->ar_orderBy['depending_on']];
+							$real_save[$this->ar_orderBy['field']] = ((int)$db->select($this->settings['table'], [$this->ar_orderBy['depending_on'] => $new_v], ['max' => $this->ar_orderBy['field']])) + 1;
 						}
 					}
 
@@ -1348,11 +1350,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->model->_Db->beginTransaction();
 
 			if ($this->beforeDelete()) {
-				foreach ($this->ar_orderBy as $campo => $opt) {
-					if ($opt['depending_on'] !== false) {
-						$this->shiftOrder($campo, $this->db_data_arr[$campo], $this->db_data_arr[$opt['depending_on']]);
+				if ($this->ar_orderBy) {
+					if ($this->ar_orderBy['depending_on'] !== false) {
+						$this->shiftOrder($this->db_data_arr[$this->ar_orderBy['field']], $this->db_data_arr[$this->ar_orderBy['depending_on']]);
 					} else {
-						$this->shiftOrder($campo, $this->db_data_arr[$campo]);
+						$this->shiftOrder($this->db_data_arr[$this->ar_orderBy['field']]);
 					}
 				}
 
@@ -1438,21 +1440,20 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Shifts by one place the order column in database (for example if the element gets deleted, all the other ones get shifted down)
 	 *
-	 * @param string $field
 	 * @param int $oldOrder
 	 * @param string $parent
 	 * @return bool
 	 */
-	private function shiftOrder(string $field, int $oldOrder, string $parent = null): bool
+	private function shiftOrder(int $oldOrder, string $parent = null): bool
 	{
-		if (!isset($this->ar_orderBy[$field]))
+		if (!$this->ar_orderBy)
 			return false;
 
-		if ($this->ar_orderBy[$field]['depending_on']) {
+		if ($this->ar_orderBy['depending_on']) {
 			$parent_check = $parent === null ? ' IS NULL' : '=' . $this->model->_Db->quote($parent);
-			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($field) . '=' . $this->model->_Db->makeSafe($field) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy[$field]['depending_on']) . $parent_check . ' AND ' . $this->model->_Db->makeSafe($field) . '>' . $this->model->_Db->quote($oldOrder));
+			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy[$this->ar_orderBy['field']]['depending_on']) . $parent_check . ' AND ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder));
 		} else {
-			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($field) . '=' . $this->model->_Db->makeSafe($field) . '-1 WHERE ' . $this->model->_Db->makeSafe($field) . '>' . $this->model->_Db->quote($oldOrder));
+			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder));
 		}
 
 		return true;
@@ -1608,6 +1609,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 	/**
 	 * @return string
+	 * @throws \Exception
 	 */
 	protected function getClassShortName(): string
 	{
@@ -1624,5 +1626,33 @@ class Element implements \JsonSerializable, \ArrayAccess
 			return $this->children_setup[$ch];
 		else
 			return null;
+	}
+
+	/**
+	 * @param int $to
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public function changeOrder(int $to): bool
+	{
+		if (!$this->ar_orderBy)
+			return false;
+
+		$where = [];
+		if ($this->ar_orderBy['depending_on'])
+			$where[$this->ar_orderBy['depending_on']] = $this[$this->ar_orderBy['depending_on']];
+
+		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
+
+		$sql = $this->model->_Db->makeSqlString($this->settings['table'], $where, ' AND ');
+		$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . ' = ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $sql);
+
+		$where[$this->ar_orderBy['field']] = ['>=', $to];
+		$sql = $this->model->_Db->makeSqlString($this->settings['table'], $where, ' AND ');
+		$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . ' = ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '+1 WHERE ' . $sql);
+
+		$this->save([$this->ar_orderBy['field'] => $to]);
+
+		return true;
 	}
 }
