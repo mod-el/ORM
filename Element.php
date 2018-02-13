@@ -256,6 +256,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param string $name
 	 * @param array|string $options
+	 * @throws \Exception
 	 */
 	protected function has(string $name, $options = [])
 	{
@@ -690,7 +691,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $options
 	 * @param bool $return
 	 * @return bool|string
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function render(string $template = null, array $options = [], bool $return = false)
 	{
@@ -1608,6 +1609,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 	/**
 	 * @return string
+	 * @throws \Exception
 	 */
 	protected function getClassShortName(): string
 	{
