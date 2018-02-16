@@ -865,7 +865,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				foreach ($columns as $ck => $cc) {
-					if ($ck == $this->settings['primary'] or $ck == 'zk_deleted')
+					if ($ck == $this->settings['primary'] or $ck == 'zk_deleted' or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck))
 						continue;
 
 					if (in_array($ck, $multilangColumns)) {
