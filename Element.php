@@ -603,6 +603,65 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
+	 * Counts how many children there are of a particular kind (using Db count method)
+	 *
+	 * @param string $i
+	 * @return int
+	 * @throws \Model\Core\Exception
+	 */
+	public function count(string $i)
+	{
+		if (!array_key_exists($i, $this->children_setup))
+			return null;
+
+		if (!$this->loaded)
+			$this->load();
+
+		$child = $this->children_setup[$i];
+
+		if (!$child or !$child['table'])
+			return null;
+
+		switch ($child['type']) {
+			case 'single':
+				if (!$child['field'] or !array_key_exists($child['field'], $this->data_arr))
+					return false;
+
+				if (!$this->data_arr[$child['field']]) {
+					return 0;
+				} else {
+					return 1;
+				}
+				break;
+			case 'multiple':
+				$read_options = [];
+
+				if ($child['assoc']) {
+					$where = isset($child['assoc']['where']) ? $child['assoc']['where'] : [];
+					$where[$child['assoc']['parent']] = $this->data_arr[$this->settings['primary']];
+					if (isset($child['assoc']['joins']))
+						$read_options['joins'] = $child['assoc']['joins'];
+
+					return $this->model->_Db->count($child['assoc']['table'], $where, $read_options);
+				} else {
+					if (!$child['field'])
+						return null;
+
+					$where = $child['where'];
+					$where[$child['field']] = $this->data_arr[$this->settings['primary']];
+					if ($child['joins'])
+						$read_options['joins'] = $child['joins'];
+
+					return $this->model->_Db->count($child['table'], $where, $read_options);
+				}
+				break;
+			default:
+				return null;
+				break;
+		}
+	}
+
+	/**
 	 * Creates a new, non existing, child in one of the set and returns it (returns false on  failure)
 	 *
 	 * @param string $i

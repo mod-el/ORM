@@ -164,6 +164,32 @@ class ORM extends Module
 	}
 
 	/**
+	 * Counts total elements of a particular kind (using count method of Db module)
+	 *
+	 * @param string $element
+	 * @param array $where
+	 * @param array $options
+	 * @return int
+	 * @throws \Model\Core\Exception
+	 */
+	public function count(string $element, array $where = [], array $options = [])
+	{
+		$options = array_merge([
+			'table' => null,
+		], $options);
+
+		$element = $this->getNamespacedElement($element);
+
+		$table = $options['table'];
+		if (!$table)
+			$table = $element::$table;
+		if (!$table)
+			$this->model->error('Error.', 'Class "' . $element . '" has no table.');
+
+		return $this->model->_Db->count($table, $where, $options);
+	}
+
+	/**
 	 * Loads the main Element of the page (if any)
 	 *
 	 * @param string $element
