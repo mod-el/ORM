@@ -212,11 +212,11 @@ class ORM extends Module
 	 */
 	private function stringOrderBy(array $orderBy): string
 	{
-		$arr = array();
-		foreach ($orderBy as $field => $opt) {
-			if ($opt['depending_on']) $arr[] = $opt['depending_on'] . ',' . $field;
-			else $arr[] = $field;
-		}
+		$arr = [];
+		foreach ($orderBy['depending_on'] as $field)
+			$arr[] = $field;
+		$arr[] = $orderBy['field'];
+
 		return implode(',', $arr);
 	}
 
