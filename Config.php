@@ -193,10 +193,11 @@ $controllers = ' . var_export($controllers, true) . ';
 					continue;
 
 				if ($elData['order_by'] and $elData['order_by']['custom']) {
-					if ($elData['order_by']['depending_on'])
-						$qryOrderBy = $elData['order_by']['depending_on'] . ',' . $elData['order_by']['field'];
-					else
-						$qryOrderBy = $elData['order_by']['field'];
+					$qryOrderBy = [];
+					foreach ($elData['order_by']['depending_on'] as $field)
+						$qryOrderBy[] = $field;
+					$qryOrderBy[] = $elData['order_by']['field'];
+					$qryOrderBy = implode(',', $qryOrderBy);
 
 					$righe = $this->model->_Db->select_all($elData['table'], [], [
 						'order_by' => $qryOrderBy,
@@ -206,8 +207,12 @@ $controllers = ' . var_export($controllers, true) . ';
 					$lastParent = null;
 					$currentOrder = 0;
 					foreach ($righe as $r) {
-						if ($elData['order_by']['depending_on'] and $r[$elData['order_by']['depending_on']] !== $lastParent) {
-							$lastParent = $r[$elData['order_by']['depending_on']];
+						$parentString = [];
+						foreach ($elData['order_by']['depending_on'] as $field)
+							$parentString[] = $r[$field];
+						$parentString = implode(',', $parentString);
+						if ($parentString and $parentString !== $lastParent) {
+							$lastParent = $parentString;
 							$currentOrder = 0;
 						}
 

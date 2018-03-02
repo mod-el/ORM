@@ -328,8 +328,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	protected function autoIncrement(string $field, array $options = [])
 	{
 		$this->ar_autoIncrement[$field] = array_merge([
-			'depending_on' => false,
+			'depending_on' => [],
 		], $options);
+
+		if (!is_array($this->ar_autoIncrement[$field]['depending_on']))
+			$this->ar_autoIncrement[$field]['depending_on'] = [$this->ar_autoIncrement[$field]['depending_on']];
 	}
 
 	/**
@@ -343,8 +346,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$this->ar_orderBy = array_merge([
 			'field' => $field,
 			'custom' => false,
-			'depending_on' => false,
+			'depending_on' => [],
 		], $options);
+
+		if (!is_array($this->ar_orderBy['depending_on']))
+			$this->ar_orderBy['depending_on'] = [$this->ar_orderBy['depending_on']];
+
 		$this->autoIncrement($field, $options);
 	}
 
@@ -1140,12 +1147,18 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				if (!empty($real_save)) {
 					if ($this->ar_orderBy) { // If order parent was changed, I need to place the element at the end of the new list (and decrease the old list)
-						if ($this->ar_orderBy['depending_on'] and isset($real_save[$this->ar_orderBy['depending_on']])) {
-							$old_v = $this->db_data_arr[$this->ar_orderBy['depending_on']];
-							$this->shiftOrder($this->ar_orderBy['field'], $this->db_data_arr[$this->ar_orderBy['field']], $old_v);
+						$oldParents = [];
+						$newParents = [];
+						foreach ($this->ar_orderBy['depending_on'] as $field) {
+							if (isset($real_save[$field])) {
+								$oldParents = $previous_data[$field];
+								$newParents = $real_save[$field];
+							}
+						}
+						if ($oldParents) {
+							$this->shiftOrder($previous_data[$this->ar_orderBy['field']], $oldParents);
 
-							$new_v = $real_save[$this->ar_orderBy['depending_on']];
-							$real_save[$this->ar_orderBy['field']] = ((int)$db->select($this->settings['table'], [$this->ar_orderBy['depending_on'] => $new_v], ['max' => $this->ar_orderBy['field']])) + 1;
+							$real_save[$this->ar_orderBy['field']] = ((int)$db->select($this->settings['table'], $newParents, ['max' => $this->ar_orderBy['field']])) + 1;
 						}
 					}
 
@@ -1166,13 +1179,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 				foreach ($this->ar_autoIncrement as $k => $opt) {
 					if (!isset($saving[$k]) or !$saving[$k]) {
 						$where = [];
-						if ($opt['depending_on']) {
-							if (!is_array($opt['depending_on'])) {
-								$opt['depending_on'] = array($opt['depending_on']);
-							}
-							foreach ($opt['depending_on'] as $k_dep)
-								$where[$k_dep] = $saving[$k_dep];
-						}
+						foreach ($opt['depending_on'] as $k_dep)
+							$where[$k_dep] = $saving[$k_dep];
+
 						$saving[$k] = ((int)$db->select($this->settings['table'], $where, array('max' => $k))) + 1;
 						$this->data_arr[$k] = $saving[$k];
 					}
@@ -1409,13 +1418,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->model->_Db->beginTransaction();
 
 			if ($this->beforeDelete()) {
-				if ($this->ar_orderBy) {
-					if ($this->ar_orderBy['depending_on'] !== false) {
-						$this->shiftOrder($this->db_data_arr[$this->ar_orderBy['field']], $this->db_data_arr[$this->ar_orderBy['depending_on']]);
-					} else {
-						$this->shiftOrder($this->db_data_arr[$this->ar_orderBy['field']]);
-					}
-				}
+				if ($this->ar_orderBy)
+					$this->shiftOrder($this->db_data_arr[$this->ar_orderBy['field']]);
 
 				$this->model->_Db->delete($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]]);
 
@@ -1500,20 +1504,23 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Shifts by one place the order column in database (for example if the element gets deleted, all the other ones get shifted down)
 	 *
 	 * @param int $oldOrder
-	 * @param string $parent
+	 * @param array $parentsValue
 	 * @return bool
 	 */
-	private function shiftOrder(int $oldOrder, string $parent = null): bool
+	private function shiftOrder(int $oldOrder, array $parentsValue = []): bool
 	{
 		if (!$this->ar_orderBy)
 			return false;
 
-		if ($this->ar_orderBy['depending_on']) {
-			$parent_check = $parent === null ? ' IS NULL' : '=' . $this->model->_Db->quote($parent);
-			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy['depending_on']) . $parent_check . ' AND ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder));
-		} else {
-			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder));
+		$where = [];
+		foreach ($this->ar_orderBy['depending_on'] as $field) {
+			$parent = array_key_exists($field, $parentsValue) ? $parentsValue[$field] : $this[$field];
+			$parent_check = $this[$field] === null ? ' IS NULL' : '=' . $this->model->_Db->quote($parent);
+			$where[] = $this->model->_Db->makeSafe($field) . $parent_check;
 		}
+		$where[] = $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder);
+
+		$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . implode(' AND ', $where));
 
 		return true;
 	}
@@ -1698,8 +1705,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			return false;
 
 		$where = [];
-		if ($this->ar_orderBy['depending_on'])
-			$where[$this->ar_orderBy['depending_on']] = $this[$this->ar_orderBy['depending_on']];
+		foreach ($this->ar_orderBy['depending_on'] as $field)
+			$where[$field] = $this[$field];
 
 		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
 
