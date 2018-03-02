@@ -1510,7 +1510,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		if ($this->ar_orderBy['depending_on']) {
 			$parent_check = $parent === null ? ' IS NULL' : '=' . $this->model->_Db->quote($parent);
-			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy[$this->ar_orderBy['field']]['depending_on']) . $parent_check . ' AND ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder));
+			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy['depending_on']) . $parent_check . ' AND ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder));
 		} else {
 			$this->model->_Db->query('UPDATE ' . $this->model->_Db->makeSafe($this->settings['table']) . ' SET ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '=' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $this->model->_Db->makeSafe($this->ar_orderBy['field']) . '>' . $this->model->_Db->quote($oldOrder));
 		}
