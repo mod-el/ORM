@@ -129,17 +129,18 @@ class ORM extends Module
 			'table' => null,
 		], $options);
 
+		$elementShortName = $element;
 		$element = $this->getNamespacedElement($element);
 
 		$table = $options['table'];
 		if (!$table)
 			$table = $element::$table;
 		if (!$table)
-			$this->model->error('Error.', 'Class "' . $element . '" has no table.');
+			$this->model->error('Error.', 'Class "' . $elementShortName . '" has no table.');
 
 		$tree = $this->getElementsTree();
-		if (isset($tree['elements'][$element])) {
-			$el_data = $tree['elements'][$element];
+		if (isset($tree['elements'][$elementShortName])) {
+			$el_data = $tree['elements'][$elementShortName];
 			if ($el_data['order_by'] and (!isset($options['order_by']) or !$options['order_by']))
 				$options['order_by'] = $this->stringOrderBy($el_data['order_by']);
 		}
