@@ -76,6 +76,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'model' => false,
 		], $settings);
 
+		$this->model = $this->settings['model'];
+
 		if ($this->settings['table'] === null)
 			$this->settings['table'] = $this::$table;
 
@@ -91,7 +93,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		$this->data_arr = $data;
 
-		$this->model = $this->settings['model'];
 		$this->options = $this->settings['options'];
 
 		$this->init();
