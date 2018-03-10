@@ -147,7 +147,7 @@ class ORM extends Module
 
 		$q = $this->model->_Db->select_all($table, $where, $options);
 		if (isset($options['stream']) and $options['stream']) {
-			$iterator = new ElementsIterator($element, $q, $this->model);
+			$iterator = new ElementsIterator($element, $q, $this->model, ['table' => $options['table']]);
 			return $iterator;
 		} else {
 			$arr = array();
@@ -155,7 +155,7 @@ class ORM extends Module
 				if (isset($this->objects_cache[$element][$r['id']])) {
 					$arr[] = $this->objects_cache[$element][$r['id']];
 				} else {
-					$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true]);
+					$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $options['table']]);
 					$arr[] = $obj;
 					$this->objects_cache[$element][$r['id']] = $obj;
 				}

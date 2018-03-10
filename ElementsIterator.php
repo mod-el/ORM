@@ -12,6 +12,8 @@ class ElementsIterator implements \Iterator, \Countable
 	private $cursor;
 	/** @var Element */
 	private $current;
+	/** @var array */
+	private $options;
 	/** @var \Model\Core\Core */
 	private $model;
 
@@ -21,14 +23,18 @@ class ElementsIterator implements \Iterator, \Countable
 	 * @param string $element
 	 * @param \PDOStatement $q
 	 * @param \Model\Core\Core $model
+	 * @param array $options
 	 */
-	public function __construct(string $element, \PDOStatement $q, Core $model)
+	public function __construct(string $element, \PDOStatement $q, Core $model, array $options = [])
 	{
 		$this->element = $element;
 		$this->q = $q;
 		$this->cursor = 0;
 		$this->current = null;
 		$this->model = $model;
+		$this->options = array_merge([
+			'table' => null,
+		], $options);
 	}
 
 	/**
@@ -78,7 +84,11 @@ class ElementsIterator implements \Iterator, \Countable
 	{
 		$data = $this->q->fetch();
 		$type = $this->element;
-		$this->current = $data !== false ? new $type($data, array('model' => $this->model, 'pre_loaded' => true)) : false;
+		$this->current = $data !== false ? new $type($data, [
+			'table' => $this->options['table'],
+			'pre_loaded' => true,
+			'model' => $this->model,
+		]) : false;
 	}
 
 	/**
