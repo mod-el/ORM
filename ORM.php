@@ -67,11 +67,13 @@ class ORM extends Module
 			$table = $element::$table;
 		if ($table) {
 			if (is_array($where)) {
+				$tableModel = $this->model->_Db->getTable($table);
+
 				$sel = $this->model->_Db->select($table, $where, $options);
 				if ($sel === false)
 					return false;
 
-				$id = $sel['id'];
+				$id = $sel[$tableModel->primary];
 
 				if (isset($this->objects_cache[$element][$id]) and !$options['clone'])
 					return $this->objects_cache[$element][$id];
@@ -137,6 +139,7 @@ class ORM extends Module
 			$table = $element::$table;
 		if (!$table)
 			$this->model->error('Error.', 'Class "' . $elementShortName . '" has no table.');
+		$tableModel = $this->model->_Db->getTable($table);
 
 		$tree = $this->getElementsTree();
 		if (isset($tree['elements'][$elementShortName])) {
@@ -150,14 +153,14 @@ class ORM extends Module
 			$iterator = new ElementsIterator($element, $q, $this->model, ['table' => $options['table']]);
 			return $iterator;
 		} else {
-			$arr = array();
+			$arr = [];
 			foreach ($q as $r) {
-				if (isset($this->objects_cache[$element][$r['id']])) {
-					$arr[] = $this->objects_cache[$element][$r['id']];
+				if (isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
+					$arr[] = $this->objects_cache[$element][$r[$tableModel->primary]];
 				} else {
 					$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $options['table']]);
 					$arr[] = $obj;
-					$this->objects_cache[$element][$r['id']] = $obj;
+					$this->objects_cache[$element][$r[$tableModel->primary]] = $obj;
 				}
 			}
 			return $arr;
