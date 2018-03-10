@@ -64,7 +64,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	{
 		$this->settings = array_merge([
 			'table' => null,
-			'primary' => 'id',
+			'primary' => null,
 			'parent' => false,
 			'pre_loaded' => false,
 			'pre_loaded_children' => [],
@@ -78,6 +78,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		if ($this->settings['table'] === null)
 			$this->settings['table'] = $this::$table;
+
+		$tableModel = $this->model->_Db->getTable($this->settings['table']);
+		if ($this->settings['primary'] === null)
+			$this->settings['primary'] = $tableModel->primary;
 
 		if (!is_array($data)) {
 			$data = [
@@ -277,7 +281,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'fields' => [], // Fields for each one of the children
 			'files' => [], // Files for each one of the children
 			'duplicable' => true, // Can be duplicated?
-			'primary' => 'id', // Primary field in the children table
+			'primary' => null, // Primary field in the children table
 		], $options);
 
 		if ($options['field'] === null) {
@@ -296,6 +300,15 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$options['table'] = $this->model->_ORM->getTableFor($options['element']);
 			else
 				$options['table'] = $name;
+		}
+
+		if ($options['primary'] === null) {
+			if ($options['table']) {
+				$tableModel = $this->model->_Db->getTable($options['table']);
+				$options['primary'] = $tableModel->primary;
+			} else {
+				$options['primary'] = 'id';
+			}
 		}
 
 		$this->children_setup[$name] = $options;
@@ -495,9 +508,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function jsonSerialize()
 	{
 		$this->load();
-		$return = array('exists' => $this->exists(), 'data' => $this->data_arr, 'options' => $this->options);
+		$return = ['exists' => $this->exists(), 'data' => $this->data_arr, 'options' => $this->options];
 		if ($this->parent !== false)
-			$return['parent'] = array('element' => get_class($this->parent), 'id' => $this->parent[$this->parent->settings['primary']]);
+			$return['parent'] = ['element' => get_class($this->parent), 'id' => $this->parent[$this->parent->settings['primary']]];
 		return $return;
 	}
 
@@ -557,8 +570,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
 						$options['assoc'] = $c;
-						$new_child = $this->model->_ORM->one($child['element'], $c[$child['assoc']['field']], ['clone' => true, 'parent' => $this, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
-						$this->children_ar[$i][$c['id']] = $new_child;
+						$new_child = $this->model->_ORM->one($child['element'], $c[$child['assoc']['field']], ['clone' => true, 'parent' => $this, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c[$child['primary']], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+						$this->children_ar[$i][$c[$child['primary']]] = $new_child;
 					}
 				} else {
 					if (!$child['field'])
@@ -576,10 +589,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
-						if (isset($this->settings['pre_loaded_children'][$i][$c['id']])) {
-							$this->children_ar[$i][$c['id']] = $this->settings['pre_loaded_children'][$i][$c['id']];
+						if (isset($this->settings['pre_loaded_children'][$i][$c[$child['primary']]])) {
+							$this->children_ar[$i][$c[$child['primary']]] = $this->settings['pre_loaded_children'][$i][$c[$child['primary']]];
 						} else {
-							$this->children_ar[$i][$c['id']] = $this->model->_ORM->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c['id'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+							$this->children_ar[$i][$c[$child['primary']]] = $this->model->_ORM->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c[$child['primary']], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						}
 					}
 				}
@@ -692,7 +705,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					return false;
 
 				$el = $this->model->_ORM->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields']]);
-				$el->update(['id' => $id]);
+				$el->update([$child['primary'] => $id]);
 				return $el;
 				break;
 			case 'multiple':
@@ -706,7 +719,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$data = $child['where'];
 					$data[$child['field']] = $this->data_arr[$this->settings['primary']];
-					$data['id'] = $id;
+					$data[$child['primary']] = $id;
 
 					$el = $this->model->_ORM->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'options' => $options, 'child_el' => $i . '-' . $id, 'files' => $child['files'], 'fields' => $child['fields']]);
 					$el->update($data);
@@ -835,7 +848,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$opt['fields'] = $this->data_arr;
 		}
 
-		return $this->model->getUrl($this::$controller, $this['id'], $tags, $opt);
+		return $this->model->getUrl($this::$controller, $this[$this->settings['primary']], $tags, $opt);
 	}
 
 	/**
@@ -1611,19 +1624,20 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$mlTable = $this->model->_Multilang->getTableFor($this->settings['table']);
 				if ($mlTable) {
 					$mlOptions = $this->model->_Multilang->getTableOptionsFor($this->settings['table']);
+					$mlTableModel = $this->model->_Db->getTable($mlTable);
 					foreach ($this->model->_Multilang->langs as $lang) {
 						$row = $this->model->_Db->select($mlTable, [
-							$mlOptions['keyfield'] => $this['id'],
+							$mlOptions['keyfield'] => $this[$this->settings['primary']],
 							$mlOptions['lang'] => $lang,
 						]);
 
 						if ($row) {
-							unset($row['id']);
+							unset($row[$mlTableModel->primary]);
 							unset($row[$mlOptions['keyfield']]);
 							unset($row[$mlOptions['lang']]);
 
 							$this->model->_Db->update($mlTable, [
-								$mlOptions['keyfield'] => $newEl['id'],
+								$mlOptions['keyfield'] => $newEl[$this->settings['primary']],
 								$mlOptions['lang'] => $lang,
 							], $row);
 						}
@@ -1650,7 +1664,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if ($children['type'] != 'multiple' or !$children['duplicable'])
 					continue;
 				foreach ($this->children($k) as $ch) {
-					$ch->duplicate([$children['field'] => $newEl['id']]);
+					$ch->duplicate([$children['field'] => $newEl[$this->settings['primary']]]);
 				}
 			}
 
