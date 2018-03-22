@@ -53,6 +53,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 	/** @var bool */
 	protected $_flagSaving = false; // It will assure the afterSave method will be called only once, even if save is re-called in it
+	/** @var bool */
+	protected $_flagLoading = false; // It will assure the load method will be called only once, to prevent infinite nesting loops
 
 	/**
 	 * Element constructor.
@@ -71,7 +73,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'defaults' => [],
 			'options' => [],
 			'files' => [],
-			'child_el' => false, // For the form module
 			'fields' => [], // For the form module
 			'model' => false,
 		], $settings);
@@ -128,11 +129,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (!isset($this->children_ar[$k]))
 				$this->children_ar[$k] = false;
 
-			if ($child['type'] == 'multiple' and $child['table'] and isset($this->data_arr[$this->settings['primary']])) {
+			if ($child['type'] == 'multiple' and $child['table'] and isset($this[$this->settings['primary']])) {
 				if ($child['assoc']) {
-					$this->model->_ORM->registerChildrenLoading($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$this->settings['primary']]);
+					$this->model->_ORM->registerChildrenLoading($child['assoc']['table'], $child['assoc']['parent'], $this[$this->settings['primary']]);
 				} else {
-					$this->model->_ORM->registerChildrenLoading($child['table'], $child['field'], $this->data_arr[$this->settings['primary']]);
+					$this->model->_ORM->registerChildrenLoading($child['table'], $child['field'], $this[$this->settings['primary']]);
 				}
 			}
 		}
@@ -251,7 +252,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function offsetGet($offset)
 	{
 		$this->load();
-		return isset($this->data_arr[$offset]) ? $this->data_arr[$offset] : null;
+		return $this->data_arr[$offset] ?? null;
 	}
 
 	/* Methods for setting children and parent */
@@ -387,6 +388,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function load(array $options = null)
 	{
+		if($this->_flagLoading)
+			return;
+
+		$this->_flagLoading = true;
+
 		if ($options !== null)
 			$this->options = array_merge_recursive_distinct($this->options, $options);
 
@@ -399,11 +405,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->exists = true;
 			if (!$this->settings['pre_loaded']) {
 				$temp_data = false;
-				if ($this->settings['table'] and isset($this->data_arr[$this->settings['primary']]) and $this->data_arr[$this->settings['primary']] !== false) {
-					if ($this->data_arr[$this->settings['primary']] === false)
+				if ($this->settings['table'] and isset($this[$this->settings['primary']]) and $this[$this->settings['primary']] !== false) {
+					if ($this[$this->settings['primary']] === false)
 						$temp_data = false;
 					else
-						$temp_data = $this->model->_Db->select($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]]);
+						$temp_data = $this->model->_Db->select($this->settings['table'], [$this->settings['primary'] => $this[$this->settings['primary']]]);
 				}
 
 				if ($temp_data === false) {
@@ -413,7 +419,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$this->db_data_arr = $temp_data;
 				}
 			} else {
-				if (!$this->settings['table'] or !isset($this->data_arr[$this->settings['primary']]) or !$this->data_arr[$this->settings['primary']] or !is_numeric($this->data_arr[$this->settings['primary']]))
+				if (!$this->settings['table'] or !isset($this[$this->settings['primary']]) or !$this[$this->settings['primary']] or !is_numeric($this[$this->settings['primary']]))
 					$this->exists = false;
 				else
 					$this->db_data_arr = $this->data_arr;
@@ -429,11 +435,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 				foreach ($tableModel->columns as $ck => $cc) {
 					if (!array_key_exists($ck, $this->data_arr)) {
 						if (array_key_exists($ck, $this->settings['defaults'])) {
-							$this->data_arr[$ck] = $this->settings['defaults'][$ck];
+							$this[$ck] = $this->settings['defaults'][$ck];
 						} elseif ($cc['default'] !== null) {
-							$this->data_arr[$ck] = $cc['default'];
+							$this[$ck] = $cc['default'];
 						} elseif ($cc['null']) {
-							$this->data_arr[$ck] = null;
+							$this[$ck] = null;
 						} else {
 							switch ($cc['type']) {
 								case 'int':
@@ -445,16 +451,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 								case 'decimal':
 								case 'double':
 								case 'year':
-									$this->data_arr[$ck] = 0;
+									$this[$ck] = 0;
 									break;
 								case 'date':
-									$this->data_arr[$ck] = date('Y-m-d');
+									$this[$ck] = date('Y-m-d');
 									break;
 								case 'datetime':
-									$this->data_arr[$ck] = date('Y-m-d H:i:s');
+									$this[$ck] = date('Y-m-d H:i:s');
 									break;
 								default:
-									$this->data_arr[$ck] = '';
+									$this[$ck] = '';
 									break;
 							}
 						}
@@ -467,6 +473,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->loaded = true;
 			$this->afterLoad($this->options);
 		}
+
+		$this->_flagLoading = false;
 	}
 
 	/**
@@ -484,18 +492,18 @@ class Element implements \JsonSerializable, \ArrayAccess
 	private function autoLoadParent()
 	{
 		if ($this->parent === false and $this->init_parent !== false) {
-			if (array_key_exists($this->init_parent['field'], $this->data_arr) and $this->data_arr[$this->init_parent['field']]) {
+			if (array_key_exists($this->init_parent['field'], $this->data_arr) and $this[$this->init_parent['field']]) {
 				$settings = [];
 				if ($this->init_parent['children']) {
 					$settings = [
 						'pre_loaded_children' => [
 							$this->init_parent['children'] => [
-								$this->data_arr[$this->settings['primary']] => $this,
+								$this[$this->settings['primary']] => $this,
 							],
 						],
 					];
 				}
-				$this->parent = $this->model->_ORM->one($this->init_parent['element'], $this->data_arr[$this->init_parent['field']], $settings);
+				$this->parent = $this->model->_ORM->one($this->init_parent['element'], $this[$this->init_parent['field']], $settings);
 			}
 		}
 	}
@@ -520,11 +528,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param string $i
 	 * @param bool $use_loader
-	 * @param array $options
 	 * @return bool
 	 * @throws \Model\Core\Exception
 	 */
-	protected function loadChildren(string $i, bool $use_loader = true, array $options = []): bool
+	protected function loadChildren(string $i, bool $use_loader = true): bool
 	{
 		if (!array_key_exists($i, $this->children_setup))
 			return false;
@@ -543,15 +550,15 @@ class Element implements \JsonSerializable, \ArrayAccess
 			case 'single':
 				if (!$child['field'] or !array_key_exists($child['field'], $this->data_arr))
 					return false;
-				if (!$this->data_arr[$child['field']]) {
+				if (!$this[$child['field']]) {
 					$this->children_ar[$i] = false;
 					break;
 				}
 
 				if ($child['element'] !== 'Element')
-					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->data_arr[$child['field']], ['options' => $options, 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
+					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this[$child['field']], ['files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
 				elseif ($child['table'])
-					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->model->_Db->select($child['table'], $this->data_arr[$child['field']]), ['clone' => true, 'parent' => $this, 'options' => $options, 'joins' => $child['joins'], 'table' => $child['table'], 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields']]);
+					$this->children_ar[$i] = $this->model->_ORM->one($child['element'], $this->model->_Db->select($child['table'], $this[$child['field']]), ['clone' => true, 'parent' => $this, 'joins' => $child['joins'], 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 				else
 					return false;
 				break;
@@ -560,18 +567,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				if ($child['assoc']) {
 					$where = isset($child['assoc']['where']) ? $child['assoc']['where'] : [];
-					$where[$child['assoc']['parent']] = $this->data_arr[$this->settings['primary']];
+					$where[$child['assoc']['parent']] = $this[$this->settings['primary']];
 					if (isset($child['assoc']['order_by'])) $read_options['order_by'] = $child['assoc']['order_by'];
 					if (isset($child['assoc']['joins'])) $read_options['joins'] = $child['assoc']['joins'];
 					if (count($where) > 1)
 						$q = $this->model->_Db->select_all($child['assoc']['table'], $where, $read_options);
 					else
-						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['assoc']['table'], $child['assoc']['parent'], $this->data_arr[$this->settings['primary']], $child['primary'], $read_options);
+						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['assoc']['table'], $child['assoc']['parent'], $this[$this->settings['primary']], $child['primary'], $read_options);
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
-						$options['assoc'] = $c;
-						$new_child = $this->model->_ORM->one($child['element'], $c[$child['assoc']['field']], ['clone' => true, 'parent' => $this, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c[$child['primary']], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+						$new_child = $this->model->_ORM->one($child['element'], $c[$child['assoc']['field']], ['clone' => true, 'parent' => $this, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => ['assoc' => $c], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						$this->children_ar[$i][$c[$child['primary']]] = $new_child;
 					}
 				} else {
@@ -579,21 +585,21 @@ class Element implements \JsonSerializable, \ArrayAccess
 						return false;
 
 					$where = $child['where'];
-					$where[$child['field']] = $this->data_arr[$this->settings['primary']];
+					$where[$child['field']] = $this[$this->settings['primary']];
 					if ($child['order_by']) $read_options['order_by'] = $child['order_by'];
 					if ($child['joins']) $read_options['joins'] = $child['joins'];
 
 					if (count($where) > 1)
 						$q = $this->model->_Db->select_all($child['table'], $where, $read_options);
 					else
-						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['table'], $child['field'], $this->data_arr[$this->settings['primary']], $child['primary'], $read_options);
+						$q = $this->model->_ORM->loadFromChildrenLoadingCache($child['table'], $child['field'], $this[$this->settings['primary']], $child['primary'], $read_options);
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
 						if (isset($this->settings['pre_loaded_children'][$i][$c[$child['primary']]])) {
 							$this->children_ar[$i][$c[$child['primary']]] = $this->settings['pre_loaded_children'][$i][$c[$child['primary']]];
 						} else {
-							$this->children_ar[$i][$c[$child['primary']]] = $this->model->_ORM->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => $options, 'child_el' => $i . '-' . $c[$child['primary']], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+							$this->children_ar[$i][$c[$child['primary']]] = $this->model->_ORM->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
 						}
 					}
 				}
@@ -648,7 +654,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if (!$child['field'] or !array_key_exists($child['field'], $this->data_arr))
 					return false;
 
-				if (!$this->data_arr[$child['field']]) {
+				if (!$this[$child['field']]) {
 					return 0;
 				} else {
 					return 1;
@@ -659,7 +665,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				if ($child['assoc']) {
 					$where = isset($child['assoc']['where']) ? $child['assoc']['where'] : [];
-					$where[$child['assoc']['parent']] = $this->data_arr[$this->settings['primary']];
+					$where[$child['assoc']['parent']] = $this[$this->settings['primary']];
 					if (isset($child['assoc']['joins']))
 						$read_options['joins'] = $child['assoc']['joins'];
 
@@ -669,7 +675,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						return null;
 
 					$where = $child['where'];
-					$where[$child['field']] = $this->data_arr[$this->settings['primary']];
+					$where[$child['field']] = $this[$this->settings['primary']];
 					if ($child['joins'])
 						$read_options['joins'] = $child['joins'];
 
@@ -705,7 +711,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if (!$child['field'])
 					return false;
 
-				$el = $this->model->_ORM->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'child_el' => $i, 'files' => $child['files'], 'fields' => $child['fields']]);
+				$el = $this->model->_ORM->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 				$el->update([$child['primary'] => $id]);
 				return $el;
 				break;
@@ -719,10 +725,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 						$this->model->error('Can\'t create new child "' . $i . '", missing field in the configuration');
 
 					$data = $child['where'];
-					$data[$child['field']] = $this->data_arr[$this->settings['primary']];
+					$data[$child['field']] = $this[$this->settings['primary']];
 					$data[$child['primary']] = $id;
 
-					$el = $this->model->_ORM->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'options' => $options, 'child_el' => $i . '-' . $id, 'files' => $child['files'], 'fields' => $child['fields']]);
+					$el = $this->model->_ORM->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 					$el->update($data);
 					return $el;
 				}
@@ -818,12 +824,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function reload(): bool
 	{
-		if (!$this->settings['table'] or !isset($this->data_arr[$this->settings['primary']]))
+		if (!$this->settings['table'] or !isset($this[$this->settings['primary']]))
 			return false;
 		$this->loaded = false;
 		$this->settings['pre_loaded'] = false;
 		$this->data_arr = [
-			$this->settings['primary'] => $this->data_arr[$this->settings['primary']],
+			$this->settings['primary'] => $this[$this->settings['primary']],
 		];
 		$this->children_ar = [];
 		$this->load();
@@ -870,17 +876,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'og_type' => 'website',
 		);
 
-		if (isset($this->data_arr['titolo']))
-			$meta['title'] = $this->data_arr['titolo'];
-		elseif (isset($this->data_arr['nome']))
-			$meta['title'] = $this->data_arr['nome'];
+		if (isset($this['titolo']))
+			$meta['title'] = $this['titolo'];
+		elseif (isset($this['nome']))
+			$meta['title'] = $this['nome'];
 
-		if (isset($this->data_arr['descrizione']) and $this->data_arr['descrizione'])
-			$metaDescrizione = $this->data_arr['descrizione'];
-		elseif (isset($this->data_arr['description']) and $this->data_arr['description'])
-			$metaDescrizione = $this->data_arr['description'];
-		elseif (isset($this->data_arr['testo']))
-			$metaDescrizione = $this->data_arr['testo'];
+		if (isset($this['descrizione']) and $this['descrizione'])
+			$metaDescrizione = $this['descrizione'];
+		elseif (isset($this['description']) and $this['description'])
+			$metaDescrizione = $this['description'];
+		elseif (isset($this['testo']))
+			$metaDescrizione = $this['testo'];
 
 		if (isset($metaDescrizione)) {
 			$meta['description'] = textCutOff(html_entity_decode(str_replace("\n", ' ', strip_tags($metaDescrizione)), ENT_QUOTES, 'UTF-8'), 200);
@@ -915,11 +921,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!$this->form) {
 			$this->load();
 
-			$this->form = new Form([
+			$formOptions = [
 				'table' => $this->settings['table'],
 				'element' => $this,
 				'model' => $this->model,
-			]);
+			];
+
+			$this->form = new Form($formOptions);
 
 			$tableModel = $this->model->_Db->getTable($this->settings['table']);
 			if ($tableModel) {
@@ -938,7 +946,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$languageVersions = [];
 					$languageVersionsQ = $this->model->_Db->select_all($multilangTable, [
-						$this->model->_Multilang->tables[$this->settings['table']]['keyfield'] => $this->data_arr[$this->settings['primary']],
+						$this->model->_Multilang->tables[$this->settings['table']]['keyfield'] => $this[$this->settings['primary']],
 					]);
 					foreach ($languageVersionsQ as $r)
 						$languageVersions[$r[$langColumn]] = $r;
@@ -958,7 +966,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 							$opt['value'][$l] = $r[$ck];
 					} else {
 						$opt = [
-							'value' => $this->data_arr[$ck],
+							'value' => $this[$ck],
 						];
 					}
 
@@ -967,7 +975,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					if (array_key_exists($ck, $this->settings['fields']))
 						$opt = array_merge_recursive_distinct($opt, $this->settings['fields'][$ck]);
-					$opt['child_el'] = $this->settings['child_el'];
 					if (isset($opt['show']) and !$opt['show'])
 						continue;
 
@@ -980,7 +987,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$f = array('path' => $f);
 				$f['type'] = 'file';
 				$f['element'] = $this;
-				$f['child_el'] = $this->settings['child_el'];
 				$this->form->add($k, $f);
 			}
 		}
@@ -1050,7 +1056,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						continue;
 					}
 				}
-			} elseif (in_array($k, $keys)) {
+			} elseif (in_array($k, $keys) or $k === $this->settings['primary']) {
 				$column = $tableModel->columns[$k];
 				$saving[$k] = $v;
 			} else {
@@ -1084,7 +1090,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			$this->data_arr[$k] = $v;
+			$this[$k] = $v;
 		}
 
 		if ($this->form)
@@ -1177,7 +1183,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					}
 
 					$updating = $db->update($this->settings['table'], [
-						$this->settings['primary'] => $this->data_arr[$this->settings['primary']],
+						$this->settings['primary'] => $this[$this->settings['primary']],
 					], $real_save, [
 						'version' => $options['version'],
 					]);
@@ -1186,7 +1192,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$this->db_data_arr = array_merge($this->db_data_arr, $real_save);
 				}
-				$id = $this->data_arr[$this->settings['primary']];
+				$id = $this[$this->settings['primary']];
 			} else {
 				$previous_data = false;
 
@@ -1197,14 +1203,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 							$where[$field] = isset($saving[$field]) ? $saving[$field] : $this[$field];
 
 						$saving[$k] = ((int)$db->select($this->settings['table'], $where, array('max' => $k))) + 1;
-						$this->data_arr[$k] = $saving[$k];
+						$this[$k] = $saving[$k];
 					}
 				}
 
 				$real_save = $saving;
 				$id = $db->insert($this->settings['table'], $saving);
 				$this->exists = true;
-				$this->data_arr[$this->settings['primary']] = $id;
+				$this[$this->settings['primary']] = $id;
 
 				$this->autoLoadParent();
 
@@ -1238,7 +1244,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 											continue 3;
 									}
 
-									if ($this->data_arr[$ch['field']]) { // Esiste
+									if ($this[$ch['field']]) { // Esiste
 										$this->{$ck}->save($saving);
 									} else { // Not existing
 										$new_el = $this->model->_ORM->create($ch['element'], ['table' => $ch['table']]);
@@ -1435,7 +1441,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if ($this->ar_orderBy)
 					$this->shiftOrder($this->db_data_arr[$this->ar_orderBy['field']]);
 
-				$this->model->_Db->delete($this->settings['table'], [$this->settings['primary'] => $this->data_arr[$this->settings['primary']]]);
+				$this->model->_Db->delete($this->settings['table'], [$this->settings['primary'] => $this[$this->settings['primary']]]);
 
 				$form = $this->getForm();
 				$dataset = $form->getDataset();
@@ -1444,8 +1450,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				$this->afterDelete();
-				if ($this->data_arr[$this->settings['primary']] and $this->parent and $this->init_parent and $this->init_parent['children']) {
-					unset($this->parent->children_ar[$this->init_parent['children']][$this->data_arr[$this->settings['primary']]]);
+				if ($this[$this->settings['primary']] and $this->parent and $this->init_parent and $this->init_parent['children']) {
+					unset($this->parent->children_ar[$this->init_parent['children']][$this[$this->settings['primary']]]);
 				}
 			} else {
 				$this->model->error('Can\t delete, not allowed.');
