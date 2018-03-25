@@ -71,6 +71,16 @@ $controllers = ' . var_export($controllers, true) . ';
 	}
 
 	/**
+	 * ModEl must be aware of the classes in order to update the elements cache, and Db must be updated
+	 *
+	 * @return array
+	 */
+	public function cacheDependencies(): array
+	{
+		return ['Core', 'Db'];
+	}
+
+	/**
 	 * Saves configuration
 	 *
 	 * @param string $type
