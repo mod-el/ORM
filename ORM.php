@@ -117,18 +117,19 @@ class ORM extends Module
 
 	/**
 	 * Returns an array of Elements of the given type
-	 * If "stream" options is set, returns an ElementsIterator
+	 * If "stream" options is set, returns a Generator
 	 *
 	 * @param string $element
 	 * @param array $where
 	 * @param array $options
-	 * @return array|ElementsIterator
+	 * @return array|\Generator
 	 * @throws \Model\Core\Exception
 	 */
 	public function all(string $element, array $where = [], array $options = [])
 	{
 		$options = array_merge([
 			'table' => null,
+			'stream' => false,
 		], $options);
 
 		$elementShortName = $element;
@@ -149,22 +150,25 @@ class ORM extends Module
 		}
 
 		$q = $this->model->_Db->select_all($table, $where, $options);
-		if (isset($options['stream']) and $options['stream']) {
-			$iterator = new ElementsIterator($element, $q, $this->model, ['table' => $options['table']]);
-			return $iterator;
-		} else {
-			$arr = [];
-			foreach ($q as $r) {
-				if (isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
-					$arr[] = $this->objects_cache[$element][$r[$tableModel->primary]];
-				} else {
-					$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $options['table']]);
-					$arr[] = $obj;
+
+		$arr = [];
+		foreach ($q as $r) {
+			if (isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
+				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
+			} else {
+				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $options['table']]);
+				if (!$options['stream'])
 					$this->objects_cache[$element][$r[$tableModel->primary]] = $obj;
-				}
 			}
-			return $arr;
+
+			if ($options['stream']) {
+				yield $obj;
+			} else {
+				$arr[] = $obj;
+			}
 		}
+		return $arr;
+
 	}
 
 	/**
