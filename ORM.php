@@ -140,7 +140,6 @@ class ORM extends Module
 			$table = $element::$table;
 		if (!$table)
 			$this->model->error('Error.', 'Class "' . $elementShortName . '" has no table.');
-		$tableModel = $this->model->_Db->getTable($table);
 
 		$tree = $this->getElementsTree();
 		if (isset($tree['elements'][$elementShortName])) {
@@ -151,23 +150,46 @@ class ORM extends Module
 
 		$q = $this->model->_Db->select_all($table, $where, $options);
 
+		if ($options['stream'])
+			return $this->elementsGenerator($q, $element, $table);
+
+		$tableModel = $this->model->_Db->getTable($table);
+
 		$arr = [];
 		foreach ($q as $r) {
 			if (isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
 				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
 			} else {
-				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $options['table']]);
-				if (!$options['stream'])
-					$this->objects_cache[$element][$r[$tableModel->primary]] = $obj;
+				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
+				$this->objects_cache[$element][$r[$tableModel->primary]] = $obj;
 			}
 
-			if ($options['stream']) {
-				yield $obj;
-			} else {
-				$arr[] = $obj;
-			}
+			$arr[] = $obj;
 		}
 		return $arr;
+	}
+
+	/**
+	 * Method used by "all" with "stream" option, returns a generator of requested elements
+	 *
+	 * @param \PDOStatement $q
+	 * @param string $element
+	 * @param string $table
+	 * @return \Generator
+	 */
+	private function elementsGenerator(\PDOStatement $q, string $element, string $table): \Generator
+	{
+		$tableModel = $this->model->_Db->getTable($table);
+
+		foreach ($q as $r) {
+			if (isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
+				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
+			} else {
+				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
+			}
+
+			yield $obj;
+		}
 	}
 
 	/**
