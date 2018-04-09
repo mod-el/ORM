@@ -388,7 +388,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function load(array $options = null)
 	{
-		if($this->_flagLoading)
+		if ($this->_flagLoading)
 			return;
 
 		$this->_flagLoading = true;
@@ -970,9 +970,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 						];
 					}
 
-					if ($ck == 'password' and $cc['type'] == 'char' and $cc['length'] == 40)
-						$opt['type'] = 'password';
-
 					if (array_key_exists($ck, $this->settings['fields']))
 						$opt = array_merge_recursive_distinct($opt, $this->settings['fields'][$ck]);
 					if (isset($opt['show']) and !$opt['show'])
@@ -1220,6 +1217,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if ($id !== false) {
 				$form = $this->getForm();
 				$dataset = $form->getDataset();
+
 				foreach ($dataset as $k => $d) {
 					if (array_key_exists($k, $data))
 						$d->save($data[$k]);
