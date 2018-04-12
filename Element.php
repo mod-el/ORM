@@ -1156,11 +1156,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if ($this->exists()) {
 				$previous_data = $this->db_data_arr;
 
-				$real_save = [];
-				foreach ($saving as $k => $v) { // Only data that actually changed will be saved
-					if (!array_key_exists($k, $this->db_data_arr) or is_array($v) or $db->quote($this->db_data_arr[$k]) !== $db->quote($v))
-						$real_save[$k] = $v;
-				}
+				$real_save = $this->filterDataToSave($saving);
 
 				if (!empty($real_save)) {
 					if ($this->ar_orderBy) { // If order parent was changed, I need to place the element at the end of the new list (and decrease the old list)
@@ -1362,6 +1358,22 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	protected function afterSave($previous_data, array $saving)
 	{
+	}
+
+	/**
+	 * Only data that actually changed will be saved
+	 *
+	 * @param array $data
+	 * @return array
+	 */
+	public function filterDataToSave(array $data): array
+	{
+		$real_save = [];
+		foreach ($data as $k => $v) {
+			if (!array_key_exists($k, $this->db_data_arr) or is_array($v) or $this->model->_Db->quote($this->db_data_arr[$k]) !== $this->model->_Db->quote($v))
+				$real_save[$k] = $v;
+		}
+		return $real_save;
 	}
 
 	/**
