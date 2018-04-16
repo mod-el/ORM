@@ -69,6 +69,9 @@ class ORM extends Module
 			if (is_array($where)) {
 				$tableModel = $this->model->_Db->getTable($table);
 
+				if (isset($where[$tableModel->primary]))
+					$where = [$tableModel->primary => $where[$tableModel->primary]];
+
 				$sel = $this->model->_Db->select($table, $where, $options);
 				if ($sel === false)
 					return false;
@@ -129,7 +132,7 @@ class ORM extends Module
 	{
 		$options = array_merge([
 			'table' => null,
-			'stream' => false,
+			'stream' => true,
 		], $options);
 
 		$elementShortName = $element;
@@ -172,12 +175,12 @@ class ORM extends Module
 	/**
 	 * Method used by "all" with "stream" option, returns a generator of requested elements
 	 *
-	 * @param \PDOStatement $q
+	 * @param \Generator $q
 	 * @param string $element
 	 * @param string $table
 	 * @return \Generator
 	 */
-	private function elementsGenerator(\PDOStatement $q, string $element, string $table): \Generator
+	private function elementsGenerator(\Generator $q, string $element, string $table): \Generator
 	{
 		$tableModel = $this->model->_Db->getTable($table);
 
