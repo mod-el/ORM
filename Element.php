@@ -947,6 +947,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$languageVersions = [];
 					$languageVersionsQ = $this->model->_Db->select_all($multilangTable, [
 						$this->model->_Multilang->tables[$this->settings['table']]['keyfield'] => $this[$this->settings['primary']],
+					], [
+						'fallback' => false,
 					]);
 					foreach ($languageVersionsQ as $r)
 						$languageVersions[$r[$langColumn]] = $r;
