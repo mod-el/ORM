@@ -1,5 +1,6 @@
 <?php namespace Model\ORM\Controllers;
 
+use Model\Core\Autoloader;
 use Model\Core\Controller;
 
 class ORMController extends Controller
@@ -20,7 +21,8 @@ class ORMController extends Controller
 			if ($data === null)
 				$this->model->error('Invalid data format.');
 
-			$className = $this->model->getRequest(1);
+			$elementName = $this->model->getRequest(1);
+			$className = Autoloader::searchFile('Element', $elementName);
 			if ($className and class_exists($className) and is_subclass_of($className, '\\Model\\ORM\\Element')) {
 				$id = $this->model->getRequest(2);
 				if (!is_numeric($id) or $id <= 0)
@@ -28,10 +30,10 @@ class ORMController extends Controller
 
 				$method = $this->model->getRequest(3);
 
-				if (!$this->model->_ORM->isAPIActionAuthorized($className, $id, $method, $data))
+				if (!$this->model->_ORM->isAPIActionAuthorized($elementName, $id, $method, $data))
 					$this->model->error('Unauthorized');
 
-				$el = $this->model->_ORM->one($className, $id);
+				$el = $this->model->_ORM->one($elementName, $id);
 				if ($id > 0 and !$el->exists())
 					$this->model->error('Element does not exist');
 				if (!method_exists($el, $method))
@@ -49,7 +51,7 @@ class ORMController extends Controller
 			} else {
 				$this->model->error('Element type does not exist');
 			}
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			$this->model->_Db->rollBack();
 			$this->model->sendJSON(['err' => getErr($e)]);
 		}
