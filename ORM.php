@@ -6,7 +6,7 @@ use Model\Core\Module;
 class ORM extends Module
 {
 	/** @var Element */
-	public $element;
+	public $element = null;
 	/** @var array */
 	protected $objects_cache = array();
 	/** @var array */
@@ -227,12 +227,12 @@ class ORM extends Module
 	 * @param string $element
 	 * @param int|bool $id
 	 * @param array $options
-	 * @return Element
+	 * @return Element|null
 	 * @throws \Model\Core\Exception
 	 */
-	public function loadMainElement(string $element, $id, array $options = []): Element
+	public function loadMainElement(string $element, $id, array $options = [])
 	{
-		$this->element = $this->one($element, $id, $options);
+		$this->element = $this->one($element, $id, $options) ?: null;
 		return $this->element;
 	}
 
