@@ -98,8 +98,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		$this->init();
 
-		$this->initChildren();
-
 		if (is_object($this->settings['parent']) and (!$this->init_parent or !isset($this->init_parent['element']) or get_class($this->settings['parent']) == $this->init_parent['element']))
 			$this->parent = $this->settings['parent'];
 
@@ -111,6 +109,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (!isset($this->settings['fields'][$fk]['type']))
 				$this->settings['fields'][$fk]['type'] = false;
 		}
+
+		$this->initChildren();
 	}
 
 	/**
