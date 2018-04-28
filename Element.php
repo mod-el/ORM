@@ -1136,6 +1136,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'version' => null,
 		], $options);
 
+		$this->model->_ORM->trigger('save', [
+			'element' => $this->getClassShortName(),
+			'id' => $this['id'],
+			'data' => $data,
+			'options' => $options,
+		]);
+
 		$dati_orig = $data;
 
 		if ($data === null) {
@@ -1445,6 +1452,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$this->load();
 		if (!$this->exists()) // If it doesn't exist, then there is nothing to delete
 			return false;
+
+		$this->model->_ORM->trigger('delete', [
+			'element' => $this->getClassShortName(),
+			'id' => $this['id'],
+		]);
 
 		try {
 			$this->model->_Db->beginTransaction();
