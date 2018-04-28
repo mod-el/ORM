@@ -10,5 +10,11 @@
 			"folder": "Elements",
 			"class": true
 		}
-	}
+	},
+	"zk-pages": [
+		{
+			"text": "Elements",
+			"url": "modules/config/ORM"
+		}
+	]
 }
