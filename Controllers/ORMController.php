@@ -10,8 +10,8 @@ class ORMController extends Controller
 		try {
 			$this->model->_Db->beginTransaction();
 
-			if (!DEBUG_MODE and !$this->model->_CSRF->checkCsrf())
-				$this->model->error('CSRF detected! Unauthorized.');
+			if (!DEBUG_MODE)
+				$this->model->error('Unauthorized.');
 
 			$data = $this->model->getInput('data');
 			if (!$data)
@@ -29,9 +29,6 @@ class ORMController extends Controller
 					$this->model->error('Invalid ID');
 
 				$method = $this->model->getRequest(3);
-
-				if (!$this->model->_ORM->isAPIActionAuthorized($elementName, $id, $method, $data))
-					$this->model->error('Unauthorized');
 
 				$el = $this->model->_ORM->one($elementName, $id);
 				if ($id > 0 and !$el->exists())

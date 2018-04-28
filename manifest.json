@@ -3,7 +3,8 @@
 	"description": "Elements management",
 	"version": "1.6.0",
 	"dependencies": {
-		"Db": ">=1.4.0"
+		"Db": ">=1.4.0",
+		"RandToken": ">=0.1.0"
 	},
 	"file-types": {
 		"Element": {
