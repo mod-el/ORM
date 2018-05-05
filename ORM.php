@@ -69,7 +69,7 @@ class ORM extends Module
 			if (is_array($where)) {
 				$tableModel = $this->model->_Db->getTable($table);
 
-				if (isset($where[$tableModel->primary]))
+				if (isset($where[$tableModel->primary]) and is_numeric($where[$tableModel->primary]))
 					$where = [$tableModel->primary => $where[$tableModel->primary]];
 
 				$sel = $this->model->_Db->select($table, $where, $options);
