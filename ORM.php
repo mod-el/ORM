@@ -72,6 +72,9 @@ class ORM extends Module
 				if (isset($where[$tableModel->primary]) and is_numeric($where[$tableModel->primary]))
 					$where = [$tableModel->primary => $where[$tableModel->primary]];
 
+				if (isset($options['fields']))
+					unset($options['fields']);
+
 				$sel = $this->model->_Db->select($table, $where, $options);
 				if ($sel === false)
 					return false;
@@ -150,6 +153,9 @@ class ORM extends Module
 			if ($el_data['order_by'] and (!isset($options['order_by']) or !$options['order_by']))
 				$options['order_by'] = $this->stringOrderBy($el_data['order_by']);
 		}
+
+		if (isset($options['fields']))
+			unset($options['fields']);
 
 		$q = $this->model->_Db->select_all($table, $where, $options);
 
