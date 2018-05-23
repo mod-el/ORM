@@ -9,6 +9,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/** @var array */
 	public $data_arr;
 	/** @var array */
+	private $langs_data_arr = null;
+	/** @var array */
 	protected $db_data_arr = [];
 	/** @var array */
 	public $children_ar = [];
@@ -252,6 +254,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function offsetGet($offset)
 	{
 		$this->load();
+		if (strlen($offset) > 3 and $offset{2} === ':' and $this->model->isLoaded('Multilang')) {
+			$offset_arr = explode(':', $offset);
+			$texts = $this->getMultilangTexts();
+			if (isset($texts[$offset_arr[0]], $texts[$offset_arr[0]][$offset_arr[1]]))
+				return $texts[$offset_arr[0]][$offset_arr[1]];
+		}
 		return $this->data_arr[$offset] ?? null;
 	}
 
@@ -772,6 +780,22 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
+	 * @return array
+	 */
+	public function getMultilangTexts(): array
+	{
+		if ($this->langs_data_arr === null) {
+			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']])) {
+				$this->langs_data_arr = $this->model->_Db->getMultilangTexts($this->settings['table']);
+			} else {
+				$this->langs_data_arr = $this->model->_Db->getMultilangTexts($this->settings['table'], $this[$this->settings['primary']]);
+			}
+		}
+
+		return $this->langs_data_arr;
+	}
+
+	/**
 	 * Renders the template of this element, if present
 	 *
 	 * @param string $template
@@ -933,25 +957,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if ($tableModel) {
 				$columns = $tableModel->columns;
 
+				$multilangTexts = $this->getMultilangTexts();
+
 				$multilangColumns = [];
-				if ($this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
-					$multilangTable = $this->settings['table'] . $this->model->_Multilang->tables[$this->settings['table']]['suffix'];
-					$multilangTableModel = $this->model->_Db->getTable($multilangTable);
-					foreach ($this->model->_Multilang->tables[$this->settings['table']]['fields'] as $ml) {
-						$columns[$ml] = $multilangTableModel->columns[$ml];
-						$multilangColumns[] = $ml;
+				if (count($multilangTexts) > 0) {
+					foreach (reset($multilangTexts) as $k => $v) {
+						$multilangColumns[] = $k;
+						$columns[$k] = null;
 					}
-
-					$langColumn = $this->model->_Multilang->tables[$this->settings['table']]['lang'];
-
-					$languageVersions = [];
-					$languageVersionsQ = $this->model->_Db->select_all($multilangTable, [
-						$this->model->_Multilang->tables[$this->settings['table']]['keyfield'] => $this[$this->settings['primary']],
-					], [
-						'fallback' => false,
-					]);
-					foreach ($languageVersionsQ as $r)
-						$languageVersions[$r[$langColumn]] = $r;
 				}
 
 				foreach ($columns as $ck => $cc) {
@@ -964,8 +977,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 							'value' => [],
 						];
 
-						foreach ($languageVersions as $l => $r)
-							$opt['value'][$l] = $r[$ck];
+						foreach ($multilangTexts as $l => $r)
+							$opt['value'][$l] = $r[$ck] ?? null;
 					} else {
 						$opt = [
 							'value' => $this[$ck],
