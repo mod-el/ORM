@@ -8,8 +8,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 {
 	/** @var array */
 	public $data_arr;
-	/** @var array */
-	private $langs_data_arr = null;
+	/** @var bool */
+	protected $flagMultilangLoaded = false;
 	/** @var array */
 	protected $db_data_arr = [];
 	/** @var array */
@@ -254,11 +254,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function offsetGet($offset)
 	{
 		$this->load();
-		if (strlen($offset) > 3 and $offset{2} === ':' and $this->model->isLoaded('Multilang')) {
+		if (strlen($offset) > 3 and $offset{2} === ':' and $this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
+			$this->loadMultilangTexts();
+
 			$offset_arr = explode(':', $offset);
-			$texts = $this->getMultilangTexts();
-			if (isset($texts[$offset_arr[0]], $texts[$offset_arr[0]][$offset_arr[1]]))
-				return $texts[$offset_arr[0]][$offset_arr[1]];
+			if (isset($this->data_arr[$offset_arr[1]]) and is_array($this->data_arr[$offset_arr[1]]) and isset($this->data_arr[$offset_arr[1]][$offset_arr[0]]))
+				return $this->data_arr[$offset_arr[1]][$offset_arr[0]];
 		}
 		return $this->data_arr[$offset] ?? null;
 	}
@@ -513,6 +514,33 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 				$this->parent = $this->model->_ORM->one($this->init_parent['element'], $this[$this->init_parent['field']], $settings);
 			}
+		}
+	}
+
+	/**
+	 * Replaces multilang fields with an array of values (each key is a language)
+	 */
+	protected function loadMultilangTexts()
+	{
+		if (!$this->flagMultilangLoaded) {
+			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']])) {
+				$texts = $this->model->_Db->getMultilangTexts($this->settings['table']);
+			} else {
+				$texts = $this->model->_Db->getMultilangTexts($this->settings['table'], $this[$this->settings['primary']]);
+			}
+
+			foreach ($texts as $l => $r) {
+				foreach ($r as $k => $v) {
+					if (!isset($this->db_data_arr[$k]) or !is_array($this->db_data_arr[$k]))
+						$this->db_data_arr[$k] = [];
+					if (!isset($this->data_arr[$k]) or !is_array($this->data_arr[$k]))
+						$this->data_arr[$k] = [];
+
+					$this->db_data_arr[$k][$l] = $v;
+					$this->data_arr[$k][$l] = $v;
+				}
+			}
+			$this->flagMultilangLoaded = true;
 		}
 	}
 
@@ -780,22 +808,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
-	 * @return array
-	 */
-	public function getMultilangTexts(): array
-	{
-		if ($this->langs_data_arr === null) {
-			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']])) {
-				$this->langs_data_arr = $this->model->_Db->getMultilangTexts($this->settings['table']);
-			} else {
-				$this->langs_data_arr = $this->model->_Db->getMultilangTexts($this->settings['table'], $this[$this->settings['primary']]);
-			}
-		}
-
-		return $this->langs_data_arr;
-	}
-
-	/**
 	 * Renders the template of this element, if present
 	 *
 	 * @param string $template
@@ -944,6 +956,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		if (!$this->form) {
 			$this->load();
+			$this->loadMultilangTexts();
 
 			$formOptions = [
 				'table' => $this->settings['table'],
@@ -957,11 +970,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if ($tableModel) {
 				$columns = $tableModel->columns;
 
-				$multilangTexts = $this->getMultilangTexts();
-
 				$multilangColumns = [];
-				if (count($multilangTexts) > 0) {
-					foreach (reset($multilangTexts) as $k => $v) {
+				if ($this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
+					foreach ($this->model->_Multilang->tables[$this->settings['table']]['fields'] as $k) {
 						$multilangColumns[] = $k;
 						$columns[$k] = null;
 					}
@@ -971,19 +982,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if ($ck == $this->settings['primary'] or $ck == 'zk_deleted' or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck))
 						continue;
 
-					if (in_array($ck, $multilangColumns)) {
-						$opt = [
-							'multilang' => true,
-							'value' => [],
-						];
-
-						foreach ($multilangTexts as $l => $r)
-							$opt['value'][$l] = $r[$ck] ?? null;
-					} else {
-						$opt = [
-							'value' => $this[$ck],
-						];
-					}
+					$opt = [
+						'multilang' => in_array($ck, $multilangColumns),
+						'value' => $this[$ck],
+					];
 
 					if (array_key_exists($ck, $this->settings['fields']))
 						$opt = array_merge_recursive_distinct($opt, $this->settings['fields'][$ck]);
@@ -1205,7 +1207,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if ($updating === false)
 						return false;
 
-					$this->db_data_arr = array_merge($this->db_data_arr, $real_save);
+					$this->db_data_arr = array_merge_recursive_distinct($this->db_data_arr, $real_save);
 				}
 				$id = $this[$this->settings['primary']];
 			} else {
@@ -1392,8 +1394,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 	{
 		$real_save = [];
 		foreach ($data as $k => $v) {
-			if (!array_key_exists($k, $this->db_data_arr) or is_array($v) or $this->model->_Db->quote($this->db_data_arr[$k]) !== $this->model->_Db->quote($v))
+			if (!array_key_exists($k, $this->db_data_arr)) {
 				$real_save[$k] = $v;
+			} else {
+				if (is_array($this->db_data_arr[$k])) {
+					if (!is_array($v) or json_encode($this->db_data_arr[$k]) !== json_encode($v))
+						$real_save[$k] = $v;
+				} else {
+					if (is_array($v) or $this->model->_Db->quote($this->db_data_arr[$k]) !== $this->model->_Db->quote($v))
+						$real_save[$k] = $v;
+				}
+			}
 		}
 		return $real_save;
 	}
