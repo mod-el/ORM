@@ -261,7 +261,21 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (isset($this->data_arr[$offset_arr[1]]) and is_array($this->data_arr[$offset_arr[1]]) and isset($this->data_arr[$offset_arr[1]][$offset_arr[0]]))
 				return $this->data_arr[$offset_arr[1]][$offset_arr[0]];
 		}
-		return $this->data_arr[$offset] ?? null;
+
+		if (isset($this->data_arr[$offset])) {
+			if (is_array($this->data_arr[$offset])) {
+				if (count($this->data_arr[$offset]) === 0)
+					return null;
+				if ($this->model->isLoaded('Multilang') and isset($this->data_arr[$offset][$this->model->_Multilang->lang]))
+					return $this->data_arr[$offset][$this->model->_Multilang->lang];
+				else
+					return $this->data_arr[$offset][array_keys($this->data_arr[$offset])[0]];
+			} else {
+				return $this->data_arr[$offset];
+			}
+		} else {
+			return null;
+		}
 	}
 
 	/* Methods for setting children and parent */
@@ -984,7 +998,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$opt = [
 						'multilang' => in_array($ck, $multilangColumns),
-						'value' => $this[$ck],
+						'value' => $this->data_arr[$ck],
 					];
 
 					if (array_key_exists($ck, $this->settings['fields']))
