@@ -160,13 +160,16 @@ class ORM extends Module
 		$q = $this->model->_Db->select_all($table, $where, $options);
 
 		if ($options['stream'])
-			return $this->elementsGenerator($q, $element, $table);
+			return $this->elementsGenerator($q, $element, $table, $options);
 
 		$tableModel = $this->model->_Db->getTable($table);
 
 		$arr = [];
 		foreach ($q as $r) {
-			if (isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
+			if (($options['group_by'] ?? false) or ($options['sum'] ?? false) or ($options['max'] ?? false))
+				$r[$tableModel->primary] = 0;
+
+			if ($r[$tableModel->primary] and isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
 				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
 			} else {
 				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
@@ -184,14 +187,18 @@ class ORM extends Module
 	 * @param \Generator $q
 	 * @param string $element
 	 * @param string $table
+	 * @param array $options
 	 * @return \Generator
 	 */
-	private function elementsGenerator(\Generator $q, string $element, string $table): \Generator
+	private function elementsGenerator(\Generator $q, string $element, string $table, array $options): \Generator
 	{
 		$tableModel = $this->model->_Db->getTable($table);
 
 		foreach ($q as $r) {
-			if (isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
+			if (($options['group_by'] ?? false) or ($options['sum'] ?? false) or ($options['max'] ?? false))
+				$r[$tableModel->primary] = 0;
+
+			if ($r[$tableModel->primary] and isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
 				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
 			} else {
 				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
