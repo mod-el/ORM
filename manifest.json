@@ -1,9 +1,9 @@
 {
 	"name": "ORM",
 	"description": "Elements management",
-	"version": "1.6.2",
+	"version": "1.6.3",
 	"dependencies": {
-		"Db": ">=1.4.3",
+		"Db": ">=1.4.5",
 		"RandToken": ">=0.1.0"
 	},
 	"file-types": {
