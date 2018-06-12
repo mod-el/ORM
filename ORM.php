@@ -72,10 +72,11 @@ class ORM extends Module
 				if (isset($where[$tableModel->primary]) and is_numeric($where[$tableModel->primary]))
 					$where = [$tableModel->primary => $where[$tableModel->primary]];
 
-				if (isset($options['fields']))
-					unset($options['fields']);
+				$dbOptions = $options;
+				if (isset($dbOptions['fields']))
+					unset($dbOptions['fields']);
 
-				$sel = $this->model->_Db->select($table, $where, $options);
+				$sel = $this->model->_Db->select($table, $where, $dbOptions);
 				if ($sel === false)
 					return false;
 
@@ -154,10 +155,11 @@ class ORM extends Module
 				$options['order_by'] = $this->stringOrderBy($el_data['order_by']);
 		}
 
-		if (isset($options['fields']))
-			unset($options['fields']);
+		$dbOptions = $options;
+		if (isset($dbOptions['fields']))
+			unset($dbOptions['fields']);
 
-		$q = $this->model->_Db->select_all($table, $where, $options);
+		$q = $this->model->_Db->select_all($table, $where, $dbOptions);
 
 		if ($options['stream'])
 			return $this->elementsGenerator($q, $element, $table, $options);
