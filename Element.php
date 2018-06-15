@@ -307,6 +307,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'files' => [], // Files for each one of the children
 			'duplicable' => true, // Can be duplicated?
 			'primary' => null, // Primary field in the children table
+			'beforeSave' => null, // Format: function(array &$data)
+			'afterSave' => null, // Format: function($previous_data, array $saving)
 		], $options);
 
 		if ($options['field'] === null) {
@@ -1276,13 +1278,30 @@ class Element implements \JsonSerializable, \ArrayAccess
 											continue 3;
 									}
 
-									if ($this[$ch['field']]) { // Esiste
+									if ($this[$ch['field']]) { // Existing
+										if ($ch['beforeSave']) {
+											$beforeSave = $ch['beforeSave']->bindTo($this->{$ck});
+											call_user_func($beforeSave, $saving);
+										}
+										$previousChData = $this->{$ck}->getData();
 										$this->{$ck}->save($saving);
+										if ($ch['afterSave']) {
+											$afterSave = $ch['afterSave']->bindTo($this->{$ck});
+											call_user_func($afterSave, $previousChData, $saving);
+										}
 									} else { // Not existing
 										$new_el = $this->model->_ORM->create($ch['element'], ['table' => $ch['table']]);
+										if ($ch['beforeSave']) {
+											$beforeSave = $ch['beforeSave']->bindTo($new_el);
+											call_user_func($beforeSave, $saving);
+										}
 										$new_id = $new_el->save($saving);
 										$this->children_ar[$ck] = $new_el;
 										$this->save([$ch['field'] => $new_id], $options);
+										if ($ch['afterSave']) {
+											$afterSave = $ch['afterSave']->bindTo($new_el);
+											call_user_func($afterSave, null, $saving);
+										}
 									}
 								}
 								break;
@@ -1297,7 +1316,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 														continue 2;
 												}
 
+												if ($ch['beforeSave']) {
+													$beforeSave = $ch['beforeSave']->bindTo($c);
+													call_user_func($beforeSave, $saving);
+												}
+												$previousChData = $c->getData();
 												$this->model->_Db->update($ch['assoc']['table'], $c_id, $saving);
+												if ($ch['afterSave']) {
+													$afterSave = $ch['afterSave']->bindTo($c);
+													call_user_func($afterSave, $previousChData, $saving);
+												}
 											} else {
 												$this->model->_Db->delete($ch['assoc']['table'], $c_id);
 											}
@@ -1319,7 +1347,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 										}
 
 										$saving[$ch['assoc']['parent']] = $id;
+										/*if ($ch['beforeSave']) { // TODO
+
+										}*/
 										$this->model->_Db->insert($ch['assoc']['table'], $saving);
+										/*if ($ch['afterSave']) { // TODO
+
+										}*/
 										$new++;
 									}
 
@@ -1334,7 +1368,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 														continue 2;
 												}
 
+												if ($ch['beforeSave']) {
+													$beforeSave = $ch['beforeSave']->bindTo($c);
+													call_user_func($beforeSave, $saving);
+												}
+												$previousChData = $c->getData();
 												$c->save($saving, ['checkboxes' => $options['checkboxes']]);
+												if ($ch['afterSave']) {
+													$afterSave = $ch['afterSave']->bindTo($c);
+													call_user_func($afterSave, $previousChData, $saving);
+												}
 											} else {
 												if ($c->delete())
 													unset($this->children_ar[$ck][$c_id]);
@@ -1358,7 +1401,15 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 										$saving[$ch['field']] = $id;
 										$new_el = $this->create($ck, 'new' . $new);
+										if ($ch['beforeSave']) {
+											$beforeSave = $ch['beforeSave']->bindTo($new_el);
+											call_user_func($beforeSave, $saving);
+										}
 										$new_id = $new_el->save($saving, ['checkboxes' => $options['checkboxes']]);
+										if ($ch['afterSave']) {
+											$afterSave = $ch['afterSave']->bindTo($new_el);
+											call_user_func($afterSave, null, $saving);
+										}
 										$this->children_ar[$ck][$new_id] = $new_el;
 										$new++;
 									}
