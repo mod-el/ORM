@@ -1612,11 +1612,19 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function getElementTreeData(): array
 	{
 		$this->load();
+		$children = [];
+		foreach ($this->children_setup as $ck => $ch) {
+			if ($ch['beforeSave'])
+				$ch['beforeSave'] = true;
+			if ($ch['afterSave'])
+				$ch['afterSave'] = true;
+			$children[] = $ch;
+		}
 		return [
 			'table' => $this->settings['table'],
 			'primary' => $this->settings['primary'],
 			'controller' => $this::$controller,
-			'children' => $this->children_setup,
+			'children' => $children,
 			'parent' => $this->init_parent,
 			'auto_increment' => $this->ar_autoIncrement,
 			'order_by' => $this->ar_orderBy,
