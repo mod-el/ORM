@@ -881,7 +881,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$this->loaded = false;
 		$this->settings['pre_loaded'] = false;
 		$this->data_arr = [
-			$this->settings['primary'] => $this[$this->settings['primary']],
+			$this->settings['primary'] => $this->data_arr[$this->settings['primary']],
 		];
 		$this->children_ar = [];
 		$this->load();
