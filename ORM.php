@@ -200,7 +200,7 @@ class ORM extends Module
 			if (($options['group_by'] ?? false) or ($options['sum'] ?? false) or ($options['max'] ?? false))
 				$r[$tableModel->primary] = 0;
 
-			if ($r[$tableModel->primary] and isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
+			if ($tableModel->primary and $r[$tableModel->primary] and isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
 				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
 			} else {
 				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
