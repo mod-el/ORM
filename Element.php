@@ -413,7 +413,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function load(array $options = null)
 	{
-		if ($this->_flagLoading)
+		if ($this->_flagLoading or $this->destroyed)
 			return;
 
 		$this->_flagLoading = true;
@@ -568,6 +568,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function jsonSerialize()
 	{
+		if ($this->destroyed) {
+			return [
+				'exists' => false,
+				'data' => null,
+				'destroyed' => true,
+			];
+		}
 		$this->load();
 		$return = ['exists' => $this->exists(), 'data' => $this->data_arr, 'options' => $this->options];
 		if ($this->parent !== false)
