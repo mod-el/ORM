@@ -1625,6 +1625,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$ch['beforeSave'] = true;
 			if ($ch['afterSave'])
 				$ch['afterSave'] = true;
+			if ($ch['fields'])
+				unset($ch['fields']);
+			if ($ch['files'])
+				unset($ch['files']);
 			$children[] = $ch;
 		}
 		return [
