@@ -1627,7 +1627,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$ch['afterSave'] = true;
 			if (isset($ch['fields']))
 				unset($ch['fields']);
-			if (isset($ch['fields']))
+			if (isset($ch['files']))
 				unset($ch['files']);
 			$children[] = $ch;
 		}
