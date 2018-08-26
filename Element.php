@@ -1092,6 +1092,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 					} else {
 						continue;
 					}
+				} else {
+					$saving[$k] = $v;
 				}
 			} elseif (in_array($k, $keys) or $k === $this->settings['primary']) {
 				$column = $tableModel->columns[$k];
