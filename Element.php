@@ -776,9 +776,15 @@ class Element implements \JsonSerializable, \ArrayAccess
 				break;
 			case 'multiple':
 				if ($child['assoc']) {
-					/*
-                    TODO: do the associative way
-                    */
+					if (!($child['assoc']['table'] ?? null) or !($child['assoc']['parent'] ?? null) or !($child['assoc']['field'] ?? null))
+						$this->model->error('Can\'t create new child: missing either table, or parent or field in the "assoc" parameter');
+
+					$data = $child['assoc']['where'] ?? [];
+					$data[$child['assoc']['parent']] = $id;
+
+					$el = $this->model->_ORM->create('Element', ['parent' => $this, 'pre_loaded' => true, 'table' => $child['assoc']['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
+					$el->update($data);
+					return $el;
 				} else {
 					if (!$child['field'])
 						$this->model->error('Can\'t create new child "' . $i . '", missing field in the configuration');
