@@ -1,7 +1,7 @@
 {
 	"name": "ORM",
 	"description": "Elements management",
-	"version": "1.6.3",
+	"version": "1.6.4",
 	"dependencies": {
 		"Db": ">=1.4.5",
 		"RandToken": ">=0.1.0"
