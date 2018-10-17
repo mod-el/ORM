@@ -8,9 +8,9 @@ class ORM extends Module
 	/** @var Element */
 	public $element = null;
 	/** @var array */
-	protected $objects_cache = array();
+	protected $objects_cache = [];
 	/** @var array */
-	protected $children_loading = array();
+	protected $children_loading = [];
 	/** @var array */
 	protected $elements_tree = null;
 
@@ -19,23 +19,23 @@ class ORM extends Module
 	 */
 	function init(array $options)
 	{
-		$this->methods = array(
+		$this->methods = [
 			'one',
 			'create',
 			'all',
-		);
+		];
 
-		$this->properties = array(
+		$this->properties = [
 			'element',
-		);
+		];
 
 		$this->model->on('Db_changedTable', function ($data) {
 			if (array_key_exists($data['table'], $this->children_loading)) {
-				foreach ($this->children_loading[$data['table']] as &$CLC) {
-					$CLC['hasToLoad'] = $CLC['ids'];
-					$CLC['results'] = array();
+				foreach ($this->children_loading[$data['table']] as &$cache) {
+					$cache['hasToLoad'] = $cache['ids'];
+					$cache['results'] = [];
 				}
-				unset($CLC);
+				unset($cache);
 			}
 		});
 	}
@@ -282,9 +282,9 @@ class ORM extends Module
 	public function registerChildrenLoading(string $table, string $parent_field, int $id): bool
 	{
 		if (!isset($this->children_loading[$table]))
-			$this->children_loading[$table] = array();
+			$this->children_loading[$table] = [];
 		if (!isset($this->children_loading[$table][$parent_field]))
-			$this->children_loading[$table][$parent_field] = array('ids' => array(), 'results' => array(), 'hasToLoad' => array());
+			$this->children_loading[$table][$parent_field] = ['ids' => [], 'results' => [], 'hasToLoad' => []];
 
 		if (!in_array($id, $this->children_loading[$table][$parent_field]['ids'])) {
 			$this->children_loading[$table][$parent_field]['ids'][] = $id;
@@ -325,7 +325,7 @@ class ORM extends Module
 		foreach ($q as $r)
 			$this->children_loading[$table][$parent_field]['results'][$r[$primary]] = $r;
 
-		$this->children_loading[$table][$parent_field]['hasToLoad'] = array();
+		$this->children_loading[$table][$parent_field]['hasToLoad'] = [];
 
 		return true;
 	}
@@ -354,6 +354,30 @@ class ORM extends Module
 				$return[] = $r;
 		}
 		return $return;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function emptyChildrenLoadingCache(): bool
+	{
+		foreach ($this->children_loading as $table => &$fields) {
+			foreach ($fields as &$cache) {
+				$cache['results'] = [];
+				$cache['hasToLoad'] = $cache['ids'];
+			}
+			unset($cache);
+		}
+		return true;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function emptyObjectsCache(): bool
+	{
+		$this->objects_cache = [];
+		return true;
 	}
 
 	/**
