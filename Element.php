@@ -926,43 +926,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Meant to work in conjunction with Meta module
 	 *
-	 * @return array
-	 * @throws \Model\Core\Exception
-	 */
-	public function getMeta(): array
-	{
-		$this->load();
-
-		$meta = array(
-			'title' => false,
-			'description' => false,
-			'keys' => false,
-			'img' => $this->getMainImg(),
-			'og_type' => 'website',
-		);
-
-		if (isset($this['titolo']))
-			$meta['title'] = $this['titolo'];
-		elseif (isset($this['nome']))
-			$meta['title'] = $this['nome'];
-
-		if (isset($this['descrizione']) and $this['descrizione'])
-			$metaDescrizione = $this['descrizione'];
-		elseif (isset($this['description']) and $this['description'])
-			$metaDescrizione = $this['description'];
-		elseif (isset($this['testo']))
-			$metaDescrizione = $this['testo'];
-
-		if (isset($metaDescrizione)) {
-			$meta['description'] = textCutOff(html_entity_decode(str_replace("\n", ' ', strip_tags($metaDescrizione)), ENT_QUOTES, 'UTF-8'), 200);
-		}
-
-		return $meta;
-	}
-
-	/**
-	 * Meant to work in conjunction with Meta module
-	 *
 	 * @return string
 	 */
 	public function getMainImg()
