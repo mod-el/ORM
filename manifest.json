@@ -1,9 +1,9 @@
 {
 	"name": "ORM",
 	"description": "Elements management",
-	"version": "1.6.4",
+	"version": "1.6.7",
 	"dependencies": {
-		"Db": ">=1.4.5",
+		"Db": ">=1.5.0",
 		"RandToken": ">=0.1.0"
 	},
 	"file-types": {
@@ -17,5 +17,13 @@
 			"text": "Elements",
 			"url": "modules/config/ORM"
 		}
-	]
+	],
+	"bind-methods": {
+		"one": "one",
+		"create": "create",
+		"all": "all"
+	},
+	"bind-properties": {
+		"element": "element"
+	}
 }

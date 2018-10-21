@@ -84,7 +84,7 @@ $controllers = ' . var_export($controllers, true) . ';
 	 * @param array $request
 	 * @return null|string
 	 */
-	public function getTemplate(array $request)
+	public function getTemplate(array $request): ?string
 	{
 		return $request[2] == 'config' ? 'elements' : null;
 	}

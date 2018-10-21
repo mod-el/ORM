@@ -19,16 +19,6 @@ class ORM extends Module
 	 */
 	function init(array $options)
 	{
-		$this->methods = [
-			'one',
-			'create',
-			'all',
-		];
-
-		$this->properties = [
-			'element',
-		];
-
 		$this->model->on('Db_changedTable', function ($data) {
 			if (array_key_exists($data['table'], $this->children_loading)) {
 				foreach ($this->children_loading[$data['table']] as &$cache) {
@@ -420,7 +410,7 @@ class ORM extends Module
 	 * @param string $rule
 	 * @return array
 	 */
-	public function getController(array $request, string $rule)
+	public function getController(array $request, string $rule): ?array
 	{
 		return [
 			'controller' => 'ORM',
