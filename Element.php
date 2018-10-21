@@ -37,8 +37,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public static $fields = [];
 	/** @var array */
 	public static $files = [];
-	/** @var string|bool */
-	public static $controller = false;
+	/** @var string|null */
+	public static $controller = null;
 
 
 	/** @var array|bool */
@@ -907,12 +907,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $tags
 	 * @param array $opt
 	 * @return string|bool
-	 * @throws \Model\Core\Exception
 	 */
-	public function getUrl(array $tags = [], array $opt = [])
+	public function getUrl(array $tags = [], array $opt = []): ?string
 	{
-		if ($this::$controller === false)
-			return false;
+		if ($this::$controller === null)
+			return null;
 
 		$def_lang = $this->model->isLoaded('Multilang') ? $this->model->_Multilang->lang : 'it';
 		if (!isset($tags['lang']) or !$this->model->isLoaded('Multilang') or $tags['lang'] == $def_lang) {
