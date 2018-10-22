@@ -50,6 +50,7 @@ class ORM extends Module
 			'clone' => false,
 		], $options);
 
+		$elementShortName = $element;
 		$element = $this->getNamespacedElement($element);
 
 		$table = $options['table'];
@@ -59,8 +60,20 @@ class ORM extends Module
 			if (is_array($where)) {
 				$tableModel = $this->model->_Db->getTable($table);
 
-				if (isset($where[$tableModel->primary]) and is_numeric($where[$tableModel->primary]))
-					$where = [$tableModel->primary => $where[$tableModel->primary]];
+				$primary = $tableModel->primary;
+
+				$tree = $this->getElementsTree();
+				if (isset($tree['elements'][$elementShortName])) {
+					$el_data = $tree['elements'][$elementShortName];
+					if ($el_data['primary'])
+						$primary = $el_data['primary'];
+				}
+
+				if (!$primary)
+					$this->model->error('Cannot load element ' . $elementShortName . '; no primary key defined');
+
+				if (isset($where[$primary]) and is_numeric($where[$primary]))
+					$where = [$primary => $where[$primary]];
 
 				$dbOptions = $options;
 				if (isset($dbOptions['fields']))
@@ -70,7 +83,7 @@ class ORM extends Module
 				if ($sel === false)
 					return false;
 
-				$id = $sel[$tableModel->primary];
+				$id = $sel[$primary];
 
 				if (isset($this->objects_cache[$element][$id]) and !$options['clone'])
 					return $this->objects_cache[$element][$id];
@@ -156,16 +169,24 @@ class ORM extends Module
 
 		$tableModel = $this->model->_Db->getTable($table);
 
+		$primary = $tableModel->primary;
+
+		if (isset($tree['elements'][$elementShortName])) {
+			$el_data = $tree['elements'][$elementShortName];
+			if ($el_data['primary'])
+				$primary = $el_data['primary'];
+		}
+
 		$arr = [];
 		foreach ($q as $r) {
 			if (($options['group_by'] ?? false) or ($options['sum'] ?? false) or ($options['max'] ?? false))
-				$r[$tableModel->primary] = 0;
+				$r[$primary] = 0;
 
-			if ($r[$tableModel->primary] and isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
-				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
+			if ($r[$primary] and isset($this->objects_cache[$element][$r[$primary]])) {
+				$obj = $this->objects_cache[$element][$r[$primary]];
 			} else {
 				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
-				$this->objects_cache[$element][$r[$tableModel->primary]] = $obj;
+				$this->objects_cache[$element][$r[$primary]] = $obj;
 			}
 
 			$arr[] = $obj;
