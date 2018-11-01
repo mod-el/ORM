@@ -668,6 +668,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
+	 * @param string $i
+	 */
+	public function reloadChildren(string $i)
+	{
+		if (!array_key_exists($i, $this->children_setup))
+			return;
+		$this->children_ar[$i] = false;
+	}
+
+	/**
 	 * Returns a specific set of children, loads them if necessary
 	 *
 	 * @param string $i
@@ -1158,9 +1168,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (isset($data[$this->settings['primary']]))
 				unset($data[$this->settings['primary']]);
 		}
-		if ($dati_orig === null) {
+		if ($dati_orig === null)
 			$dati_orig = $data;
-		}
 
 		try {
 			$this->model->_Db->beginTransaction();
@@ -1205,6 +1214,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$id = $this[$this->settings['primary']];
 			} else {
 				$previous_data = false;
+
+				foreach ($this->data_arr as $k => $v) { // If this is a new element, I'll save eventual data that does exist in the element but wasn't explicitly set
+					if ($k === $this->settings['primary'] or array_key_exists($k, $saving))
+						continue;
+					if (!array_key_exists($k, $this->db_data_arr))
+						$saving[$k] = $v;
+				}
 
 				foreach ($this->ar_autoIncrement as $k => $opt) {
 					if (!isset($saving[$k]) or !$saving[$k]) {
