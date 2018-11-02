@@ -266,16 +266,30 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (is_array($this->data_arr[$offset])) {
 				if (count($this->data_arr[$offset]) === 0)
 					return null;
-				if ($this->model->isLoaded('Multilang') and isset($this->data_arr[$offset][$this->model->_Multilang->lang]))
+				if ($this->model->isLoaded('Multilang') and isset($this->data_arr[$offset][$this->model->_Multilang->lang])) {
 					return $this->data_arr[$offset][$this->model->_Multilang->lang];
-				else
-					return $this->data_arr[$offset][array_keys($this->data_arr[$offset])[0]];
+				} else {
+					if ($this->isArrayField($offset))
+						return $this->data_arr[$offset];
+					else
+						return $this->data_arr[$offset][array_keys($this->data_arr[$offset])[0]];
+				}
 			} else {
 				return $this->data_arr[$offset];
 			}
 		} else {
 			return null;
 		}
+	}
+
+	private function isArrayField(string $k): bool
+	{
+		$types = ['point'];
+
+		$tableModel = $this->model->_Db->getTable($this->settings['table']);
+		if (!array_key_exists($k, $tableModel->columns))
+			return false;
+		return in_array($tableModel->columns[$k]['type'], $types);
 	}
 
 	/* Methods for setting children and parent */
