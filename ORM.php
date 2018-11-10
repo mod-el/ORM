@@ -2,6 +2,7 @@
 
 use Model\Core\Autoloader;
 use Model\Core\Module;
+use Model\Db\Db;
 
 class ORM extends Module
 {
@@ -48,6 +49,7 @@ class ORM extends Module
 			'model' => $this->model,
 			'table' => null,
 			'clone' => false,
+			'idx' => $this->module_id,
 		], $options);
 
 		$elementShortName = $element;
@@ -58,7 +60,7 @@ class ORM extends Module
 			$table = $element::$table;
 		if ($table) {
 			if (is_array($where)) {
-				$tableModel = $this->model->_Db->getTable($table);
+				$tableModel = $this->getDb()->getTable($table);
 
 				$primary = $tableModel->primary;
 
@@ -79,7 +81,7 @@ class ORM extends Module
 				if (isset($dbOptions['fields']))
 					unset($dbOptions['fields']);
 
-				$sel = $this->model->_Db->select($table, $where, $dbOptions);
+				$sel = $this->getDb()->select($table, $where, $dbOptions);
 				if ($sel === false)
 					return false;
 
@@ -162,12 +164,12 @@ class ORM extends Module
 		if (isset($dbOptions['fields']))
 			unset($dbOptions['fields']);
 
-		$q = $this->model->_Db->select_all($table, $where, $dbOptions);
+		$q = $this->getDb()->select_all($table, $where, $dbOptions);
 
 		if ($options['stream'])
 			return $this->elementsGenerator($q, $element, $table, $options);
 
-		$tableModel = $this->model->_Db->getTable($table);
+		$tableModel = $this->getDb()->getTable($table);
 
 		$primary = $tableModel->primary;
 
@@ -205,7 +207,7 @@ class ORM extends Module
 	 */
 	private function elementsGenerator(\Generator $q, string $element, string $table, array $options): \Generator
 	{
-		$tableModel = $this->model->_Db->getTable($table);
+		$tableModel = $this->getDb()->getTable($table);
 
 		foreach ($q as $r) {
 			if (($options['group_by'] ?? false) or ($options['sum'] ?? false) or ($options['max'] ?? false))
@@ -244,7 +246,7 @@ class ORM extends Module
 		if (!$table)
 			$this->model->error('Error.', 'Class "' . $element . '" has no table.');
 
-		return $this->model->_Db->count($table, $where, $options);
+		return $this->getDb()->count($table, $where, $options);
 	}
 
 	/**
@@ -327,9 +329,9 @@ class ORM extends Module
 			$read_options['order_by'] = $primary;
 
 		if (count($this->children_loading[$table][$parent_field]['hasToLoad']) == 1) {
-			$q = $this->model->_Db->select_all($table, [$parent_field => $this->children_loading[$table][$parent_field]['hasToLoad'][0]], $read_options);
+			$q = $this->getDb()->select_all($table, [$parent_field => $this->children_loading[$table][$parent_field]['hasToLoad'][0]], $read_options);
 		} else {
-			$q = $this->model->_Db->select_all($table, [
+			$q = $this->getDb()->select_all($table, [
 				$parent_field => ['in', $this->children_loading[$table][$parent_field]['hasToLoad']],
 			], $read_options);
 		}
@@ -463,5 +465,16 @@ class ORM extends Module
 		if (!$namespacedElement)
 			$this->model->error('Element ' . $element . ' not found');
 		return $namespacedElement;
+	}
+
+	/**
+	 * @return Db
+	 */
+	public function getDb(): Db
+	{
+		$db = $this->model->getModule('Db', $this->module_id);
+		if (!$db)
+			$this->model->error('Cannot load Db module from ORM');
+		return $db;
 	}
 }
