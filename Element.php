@@ -39,9 +39,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public static $files = [];
 	/** @var string|null */
 	public static $controller = null;
-	/** @var string|null */
-	public static $adminPage = null;
-
 
 	/** @var array|bool */
 	protected $init_parent = false;
