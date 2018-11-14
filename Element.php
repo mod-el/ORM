@@ -1178,6 +1178,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'id' => $this['id'],
 			'data' => $data,
 			'options' => $options,
+			'exists' => $this->exists(),
 		]);
 
 		$dati_orig = $data;
