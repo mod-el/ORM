@@ -31,14 +31,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/** @var bool */
 	public $destroyed = false;
 
-	/** @var string|bool */
-	public static $table = false;
+	/** @var string|null */
+	public static $table = null;
 	/** @var array */
 	public static $fields = [];
 	/** @var array */
 	public static $files = [];
 	/** @var string|null */
 	public static $controller = null;
+	/** @var string|null */
+	public static $adminPage = null;
 
 
 	/** @var array|bool */
