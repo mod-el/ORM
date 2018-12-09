@@ -1695,6 +1695,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$options = array_merge([
 			'allPaths' => false,
 			'fakeElement' => false,
+			'idx' => null,
 		], $options);
 
 		if ($fIdx === null) {
@@ -1729,11 +1730,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if ($options['allPaths'])
 			$return = $file->getPaths();
 		else
-			$return = $file->getPath();
+			$return = $file->getPath($options['idx']);
 
-		if ($options['fakeElement']) {
+		if ($options['fakeElement'])
 			$form->options['element'] = $this;
-		}
 
 		return $return;
 	}
