@@ -81,12 +81,12 @@ $controllers = ' . var_export($controllers, true) . ';
 	}
 
 	/**
-	 * @param array $request
+	 * @param string $type
 	 * @return null|string
 	 */
-	public function getTemplate(array $request): ?string
+	public function getTemplate(string $type): ?string
 	{
-		return $request[2] == 'config' ? 'elements' : null;
+		return $type === 'config' ? 'elements' : null;
 	}
 
 	/**

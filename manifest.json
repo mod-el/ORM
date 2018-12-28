@@ -3,7 +3,7 @@
 	"description": "Elements management",
 	"version": "1.6.9",
 	"dependencies": {
-		"Core": ">=2.7.1",
+		"Core": ">=2.8.1",
 		"Db": ">=1.5.1",
 		"RandToken": ">=0.1.0"
 	},
