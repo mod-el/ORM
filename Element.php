@@ -1563,7 +1563,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->getORM()->getDb()->beginTransaction();
 
 			if ($this->beforeDelete()) {
-				if ($this->ar_orderBy)
+				if ($this->ar_orderBy and $this->ar_orderBy['custom'])
 					$this->shiftOrder($this->db_data_arr[$this->ar_orderBy['field']]);
 
 				$this->getORM()->getDb()->delete($this->settings['table'], [$this->settings['primary'] => $this[$this->settings['primary']]]);
