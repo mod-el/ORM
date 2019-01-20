@@ -97,7 +97,7 @@ class ORM extends Module
 				if ($id !== false and !is_numeric($id))
 					$this->model->error('Tried to create an element with a non-numeric id.');
 
-				if ($id !== false and isset($this->objects_cache[$element][$id]) and !$options['clone'])
+				if ($id and isset($this->objects_cache[$element][$id]) and !$options['clone'])
 					return $this->objects_cache[$element][$id];
 
 				$obj = new $element($id, $options);
