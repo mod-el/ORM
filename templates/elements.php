@@ -10,11 +10,20 @@ if ($elements_tree) {
 			if (!isset($ch['element']) or !$ch['element'] or $ch['element'] == 'Element')
 				continue;
 
-			if (!in_array($ch['element'], $links))
-				$links[] = $ch['element'];
+			if (!in_array($ch['element'], $links)) {
+				$links[] = [
+					'element' => $ch['element'],
+					'name' => $ch['relation'],
+				];
+			}
 		}
-		if ($el['parent'] and $el['parent']['element'] and $el['parent']['element'] !== 'Element' and !in_array($el['parent']['element'], $links))
-			$links[] = $el['parent']['element'];
+
+		if ($el['parent'] and $el['parent']['element'] and $el['parent']['element'] !== 'Element' and !in_array($el['parent']['element'], $links)) {
+			$links[] = [
+				'element' => $el['parent']['element'],
+				'name' => 'parent',
+			];
+		}
 
 		unset($el['children']);
 		unset($el['parent']);
@@ -48,16 +57,29 @@ if ($elements_tree) {
 		$nodes[] = ['id' => $el, 'label' => $el];
 
 		foreach ($elData['links'] as $link) {
-			$linkId = [$el, $link];
+			$linkId = [$el, $link['element']];
 			sort($linkId);
 			$linkId = implode(',', $linkId);
-			$links[$linkId] = [
-				'from' => $el,
-				'to' => $link,
-			];
+
+			if (!isset($links[$linkId])) {
+				$links[$linkId] = [
+					'from' => $el,
+					'to' => $link['element'],
+					'label' => $link['name'],
+					'font' => ['size' => 10],
+					'arrows' => ['to'],
+				];
+			} else {
+				if ($links[$linkId]['from'] === $link['element'])
+					$links[$linkId]['arrows'][] = 'from';
+			}
 		}
 	}
 
+	$links = array_map(function ($link) {
+		$link['arrows'] = implode(',', $link['arrows']);
+		return $link;
+	}, $links);
 	$links = array_values($links);
 	?>
 	var container = document.getElementById('canvas');

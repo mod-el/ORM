@@ -1634,6 +1634,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 				unset($ch['fields']);
 			if (isset($ch['files']))
 				unset($ch['files']);
+
+			$ch['relation'] = $ck;
 			$children[] = $ch;
 		}
 		return [
