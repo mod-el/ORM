@@ -808,7 +808,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 						$this->model->error('Can\'t create new child: missing either table, or parent or field in the "assoc" parameter');
 
 					$data = $child['assoc']['where'] ?? [];
-					$data[$child['assoc']['parent']] = $id;
+					$data[$child['assoc']['parent']] = $this[$this->settings['primary']];
+					$data[$child['primary']] = $id;
 
 					$el = $this->getORM()->create('Element', ['parent' => $this, 'pre_loaded' => true, 'table' => $child['assoc']['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 					$el->update($data);
