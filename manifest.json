@@ -1,11 +1,11 @@
 {
 	"name": "ORM",
 	"description": "Elements management",
-	"version": "1.6.9",
+	"version": "1.6.10",
 	"dependencies": {
 		"Core": ">=2.8.1",
 		"Db": ">=1.5.1",
-		"RandToken": ">=0.1.0"
+		"RandToken": ">=0.2.0"
 	},
 	"file-types": {
 		"Element": {
