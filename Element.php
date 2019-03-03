@@ -36,7 +36,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/** @var array */
 	public static $fields = [];
 	/** @var array */
-	public static $files = [];
+	public static $files = []; // Backward compatibility
 	/** @var string|null */
 	public static $controller = null;
 
@@ -73,7 +73,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'pre_loaded_children' => [],
 			'defaults' => [],
 			'options' => [],
-			'files' => [],
+			'files' => [], // Backward compatibility
 			'fields' => [], // For the form module
 			'model' => false,
 			'idx' => 0,
@@ -103,13 +103,24 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (is_object($this->settings['parent']) and (!$this->init_parent or !isset($this->init_parent['element']) or get_class($this->settings['parent']) == $this->init_parent['element']))
 			$this->parent = $this->settings['parent'];
 
-		$this->settings['files'] = array_merge_recursive_distinct($this::$files, $this->settings['files']);
 		$this->settings['fields'] = array_merge_recursive_distinct($this::$fields, $this->settings['fields']);
 		foreach ($this->settings['fields'] as $fk => $f) {
 			if (!is_array($f))
 				$this->settings['fields'][$fk] = array('type' => $f);
 			if (!isset($this->settings['fields'][$fk]['type']))
 				$this->settings['fields'][$fk]['type'] = false;
+		}
+
+		/* Backward compatibility */
+		$this->settings['files'] = array_merge_recursive_distinct($this::$files, $this->settings['files']);
+		foreach ($this->settings['files'] as $fk => $f) {
+			if (!is_array($f))
+				$f['path'] = $f;
+			$f['type'] = 'file';
+
+			if (!isset($this->settings['fields'][$fk]))
+				$this->settings['fields'][$fk] = [];
+			$this->settings['fields'][$fk] = array_merge_recursive_distinct($this->settings['fields'][$fk], $f);
 		}
 
 		$this->initChildren();
@@ -322,7 +333,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'save-costraints' => [], // If save == true, this fields will be checked as mandatory, and the child will not be saved if one of them is empty
 			'assoc' => false, // Settings for a "many to many" relationshipt (array with these fields: table, parent, field, where*, order_by*) *not mandatory
 			'fields' => [], // Fields for each one of the children
-			'files' => [], // Files for each one of the children
+			'files' => [], // Backward compatibility
 			'duplicable' => true, // Can be duplicated?
 			'primary' => null, // Primary field in the children table
 			'beforeSave' => null, // Format: function(array &$data)
@@ -952,13 +963,58 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
-	 * Meant to work in conjunction with Meta module
+	 * Meant to work in conjunction with Seo module
 	 *
-	 * @return string
+	 * @return string|null
 	 */
-	public function getMainImg()
+	public function getMainImg(): ?string
 	{
+		foreach ($this->settings['fields'] as $idx => $field) {
+			if ($field['type'] === 'file' and $this->isFieldAnImg($field))
+				return PATH . $this->getFilePath($idx);
+		}
 		return null;
+	}
+
+	/**
+	 * Utiilty method for getMainImg
+	 *
+	 * @param array $field
+	 * @return bool
+	 */
+	private function isFieldAnImg(array $field): bool
+	{
+		if (($field['type'] ?? null) !== 'file')
+			return false;
+
+		$mime = null;
+		$accepted = false;
+
+		if (isset($field['path'])) {
+			if (isset($field['mime']))
+				$mime = $field['mime'];
+			if (isset($field['accepted']))
+				$accepted = $field['accepted'];
+		} elseif (isset($field['paths'])) {
+			foreach ($field['paths'] as $path) {
+				if (isset($path['mime']) and $mime === null)
+					$mime = $path['mime'];
+				if (isset($path['accepted']) and $accepted === false)
+					$accepted = $path['accepted'];
+			}
+		}
+
+		if ($mime)
+			return in_array($mime, ['image/jpeg', 'image/png', 'image/gif']);
+
+		if ($accepted and is_array($accepted)) {
+			foreach ($accepted as $acceptedMime) {
+				if (in_array($acceptedMime, ['image/jpeg', 'image/png', 'image/gif']))
+					return true;
+			}
+		}
+
+		return false;
 	}
 
 	/* SAVING FUNCTIONS */
@@ -1016,10 +1072,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			foreach ($this->settings['files'] as $k => $f) {
-				if (!is_array($f))
-					$f = array('path' => $f);
-				$f['type'] = 'file';
+			foreach ($this->settings['fields'] as $k => $f) {
+				if ($f['type'] !== 'file')
+					continue;
+
 				$f['element'] = $this;
 				$this->form->add($k, $f);
 			}
@@ -1173,12 +1229,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'version' => null,
 		], $options);
 
-		$this->getORM()->trigger('save', [
+		$existed = $this->exists();
+		$this->getORM()->trigger('saving', [
 			'element' => $this->getClassShortName(),
 			'id' => $this['id'],
 			'data' => $data,
 			'options' => $options,
-			'exists' => $this->exists(),
+			'exists' => $existed,
 		]);
 
 		$dati_orig = $data;
@@ -1441,6 +1498,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
+			$this->getORM()->trigger('save', [
+				'element' => $this->getClassShortName(),
+				'id' => $this['id'],
+				'data' => $data,
+				'exists' => $existed,
+			]);
+
 			$this->getORM()->getDb()->commit();
 		} catch (\Exception $e) {
 			$this->getORM()->getDb()->rollBack();
@@ -1702,9 +1766,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 		], $options);
 
 		if ($fIdx === null) {
-			if (count($this->settings['files']) > 0) {
-				reset($this->settings['files']);
-				$fIdx = key($this->settings['files']);
+			foreach ($this->settings['fields'] as $idx => $field) {
+				if ($field['type'] === 'file') {
+					$fIdx = $idx;
+					break;
+				}
 			}
 		}
 
@@ -1726,9 +1792,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!is_object($file) or $file->options['type'] !== 'file')
 			return false;
 
-		if ($options['fakeElement']) {
+		if ($options['fakeElement'])
 			$form->options['element'] = $options['fakeElement'];
-		}
 
 		if ($options['allPaths'])
 			$return = $file->getPaths();
