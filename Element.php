@@ -963,13 +963,58 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
-	 * Meant to work in conjunction with Meta module
+	 * Meant to work in conjunction with Seo module
 	 *
-	 * @return string
+	 * @return string|null
 	 */
-	public function getMainImg()
+	public function getMainImg(): ?string
 	{
+		foreach ($this->settings['fields'] as $idx => $field) {
+			if ($field['type'] === 'file' and $this->isFieldAnImg($field))
+				return PATH . $this->getFilePath($idx);
+		}
 		return null;
+	}
+
+	/**
+	 * Utiilty method for getMainImg
+	 *
+	 * @param array $field
+	 * @return bool
+	 */
+	private function isFieldAnImg(array $field): bool
+	{
+		if (($field['type'] ?? null) !== 'file')
+			return false;
+
+		$mime = null;
+		$accepted = false;
+
+		if (isset($field['path'])) {
+			if (isset($field['mime']))
+				$mime = $field['mime'];
+			if (isset($field['accepted']))
+				$accepted = $field['accepted'];
+		} elseif (isset($field['paths'])) {
+			foreach ($field['paths'] as $path) {
+				if (isset($path['mime']) and $mime === null)
+					$mime = $path['mime'];
+				if (isset($path['accepted']) and $accepted === false)
+					$accepted = $path['accepted'];
+			}
+		}
+
+		if ($mime)
+			return in_array($mime, ['image/jpeg', 'image/png', 'image/gif']);
+
+		if ($accepted and is_array($accepted)) {
+			foreach ($accepted as $acceptedMime) {
+				if (in_array($acceptedMime, ['image/jpeg', 'image/png', 'image/gif']))
+					return true;
+			}
+		}
+
+		return false;
 	}
 
 	/* SAVING FUNCTIONS */
@@ -1747,9 +1792,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!is_object($file) or $file->options['type'] !== 'file')
 			return false;
 
-		if ($options['fakeElement']) {
+		if ($options['fakeElement'])
 			$form->options['element'] = $options['fakeElement'];
-		}
 
 		if ($options['allPaths'])
 			$return = $file->getPaths();
