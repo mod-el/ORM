@@ -1173,12 +1173,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'version' => null,
 		], $options);
 
-		$this->getORM()->trigger('save', [
+		$existed = $this->exists();
+		$this->getORM()->trigger('saving', [
 			'element' => $this->getClassShortName(),
 			'id' => $this['id'],
 			'data' => $data,
 			'options' => $options,
-			'exists' => $this->exists(),
+			'exists' => $existed,
 		]);
 
 		$dati_orig = $data;
@@ -1440,6 +1441,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$this->_flagSaving = false;
 				}
 			}
+
+			$this->getORM()->trigger('save', [
+				'element' => $this->getClassShortName(),
+				'id' => $this['id'],
+				'data' => $data,
+				'exists' => $existed,
+			]);
 
 			$this->getORM()->getDb()->commit();
 		} catch (\Exception $e) {
