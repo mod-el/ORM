@@ -977,6 +977,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
+	 * Meant to work in conjunction with Seo module
+	 *
+	 * @return array
+	 */
+	public function getMeta(): array
+	{
+		return [];
+	}
+
+	/**
 	 * Utiilty method for getMainImg
 	 *
 	 * @param array $field
