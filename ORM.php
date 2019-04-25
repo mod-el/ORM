@@ -50,6 +50,7 @@ class ORM extends Module
 			'table' => null,
 			'clone' => false,
 			'idx' => $this->module_id,
+			'pre_loaded' => false,
 		], $options);
 
 		$elementShortName = $element;
@@ -60,38 +61,42 @@ class ORM extends Module
 			$table = $element::$table;
 		if ($table) {
 			if (is_array($where)) {
-				$tableModel = $this->getDb()->getTable($table);
+				if ($options['pre_loaded']) {
+					$obj = new $element($where, $options);
+				} else {
+					$tableModel = $this->getDb()->getTable($table);
 
-				$primary = $tableModel->primary;
+					$primary = $tableModel->primary;
 
-				$tree = $this->getElementsTree();
-				if (isset($tree['elements'][$elementShortName])) {
-					$el_data = $tree['elements'][$elementShortName];
-					if ($el_data['primary'])
-						$primary = $el_data['primary'];
+					$tree = $this->getElementsTree();
+					if (isset($tree['elements'][$elementShortName])) {
+						$el_data = $tree['elements'][$elementShortName];
+						if ($el_data['primary'])
+							$primary = $el_data['primary'];
+					}
+
+					if (!$primary)
+						$this->model->error('Cannot load element ' . $elementShortName . '; no primary key defined');
+
+					if (isset($where[$primary]) and is_numeric($where[$primary]))
+						$where = [$primary => $where[$primary]];
+
+					$dbOptions = $options;
+					if (isset($dbOptions['fields']))
+						unset($dbOptions['fields']);
+
+					$sel = $this->getDb()->select($table, $where, $dbOptions);
+					if ($sel === false)
+						return false;
+
+					$id = $sel[$primary];
+
+					if (isset($this->objects_cache[$element][$id]) and !$options['clone'])
+						return $this->objects_cache[$element][$id];
+
+					$options['pre_loaded'] = true;
+					$obj = new $element($sel, $options);
 				}
-
-				if (!$primary)
-					$this->model->error('Cannot load element ' . $elementShortName . '; no primary key defined');
-
-				if (isset($where[$primary]) and is_numeric($where[$primary]))
-					$where = [$primary => $where[$primary]];
-
-				$dbOptions = $options;
-				if (isset($dbOptions['fields']))
-					unset($dbOptions['fields']);
-
-				$sel = $this->getDb()->select($table, $where, $dbOptions);
-				if ($sel === false)
-					return false;
-
-				$id = $sel[$primary];
-
-				if (isset($this->objects_cache[$element][$id]) and !$options['clone'])
-					return $this->objects_cache[$element][$id];
-
-				$options['pre_loaded'] = true;
-				$obj = new $element($sel, $options);
 			} else {
 				$id = $where;
 				if ($id !== false and !is_numeric($id))
