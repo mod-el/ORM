@@ -957,6 +957,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!isset($tags['lang']) or !$this->model->isLoaded('Multilang') or $tags['lang'] == $def_lang) {
 			$this->load();
 			$opt['fields'] = $this->data_arr;
+
+			foreach ($opt['fields'] as $k => $v) {
+				if (is_array($v))
+					$opt['fields'][$k] = $v[$def_lang] ?? reset($v);
+			}
 		}
 
 		return $this->model->getUrl($this::$controller, $this[$this->settings['primary']], $tags, $opt);
