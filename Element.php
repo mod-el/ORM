@@ -1088,7 +1088,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			}
 
 			foreach ($this->settings['fields'] as $k => $f) {
-				if ($f['type'] !== 'file')
+				if ($f['type'] !== 'file' and $f['type'] !== 'custom')
 					continue;
 
 				$f['element'] = $this;
