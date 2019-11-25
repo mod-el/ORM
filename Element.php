@@ -1282,8 +1282,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 						$newParents = [];
 						foreach ($this->ar_orderBy['depending_on'] as $field) {
 							if (isset($real_save[$field])) {
-								$oldParents = $previous_data[$field];
-								$newParents = $real_save[$field];
+								$oldParents[] = $previous_data[$field];
+								$newParents[] = $real_save[$field];
 							}
 						}
 						if ($oldParents) {
