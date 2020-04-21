@@ -265,7 +265,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function offsetGet($offset)
 	{
 		$this->load();
-		if (strlen($offset) > 3 and $offset{2} === ':' and $this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
+		if (strlen($offset) > 3 and $offset[2] === ':' and $this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
 			$this->loadMultilangTexts();
 
 			$offset_arr = explode(':', $offset);
