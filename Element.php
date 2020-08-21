@@ -1455,13 +1455,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 												if ($ch['beforeSave']) {
 													$beforeSave = $ch['beforeSave']->bindTo($c);
-													call_user_func($beforeSave, $saving);
+													call_user_func_array($beforeSave, [&$saving]);
 												}
 												$previousChData = $c->getData();
 												$c->save($saving, ['checkboxes' => $options['checkboxes']]);
 												if ($ch['afterSave']) {
 													$afterSave = $ch['afterSave']->bindTo($c);
-													call_user_func($afterSave, $previousChData, $saving);
+													call_user_func_array($afterSave, [$previousChData, $saving]);
 												}
 											} else {
 												if ($c->delete())
@@ -1488,12 +1488,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 										$new_el = $this->create($ck, 'new' . $new);
 										if ($ch['beforeSave']) {
 											$beforeSave = $ch['beforeSave']->bindTo($new_el);
-											call_user_func($beforeSave, $saving);
+											call_user_func_array($beforeSave, [&$saving]);
 										}
 										$new_id = $new_el->save($saving, ['checkboxes' => $options['checkboxes']]);
 										if ($ch['afterSave']) {
 											$afterSave = $ch['afterSave']->bindTo($new_el);
-											call_user_func($afterSave, null, $saving);
+											call_user_func_array($afterSave, [null, $saving]);
 										}
 										$this->children_ar[$ck][$new_id] = $new_el;
 										$new++;
