@@ -1073,6 +1073,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if ($ck == $this->settings['primary'] or $ck == 'zk_deleted' or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck))
 						continue;
 
+					foreach ($this->settings['fields'] as $field_for_check) {
+						if (
+							$field_for_check['type'] === 'file'
+							and (($field_for_check['name_db'] ?? null) === $ck or ($field_for_check['ext_db'] ?? null) === $ck)
+						)
+							continue 2;
+					}
+
 					$opt = [
 						'multilang' => in_array($ck, $multilangColumns),
 						'value' => $this->data_arr[$ck],
