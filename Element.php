@@ -1157,6 +1157,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		}
 
 		$saving = [];
+		$dontUpdateSaving = false;
 		foreach ($data as $k => $v) {
 			if (in_array($k, $multilangKeys)) { // In case of multilang columns, I only update the current language in the element
 				$column = $multilangTableModel->columns[$k];
@@ -1164,6 +1165,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$saving[$k] = $v;
 
 					if (array_key_exists($this->model->_Multilang->lang, $v)) {
+						$dontUpdateSaving = true;
 						$v = $v[$this->model->_Multilang->lang];
 					} else {
 						continue;
@@ -1205,6 +1207,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
+			if (!$dontUpdateSaving)
+				$saving[$k] = $v;
 			$this[$k] = $v;
 		}
 
