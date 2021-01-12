@@ -1930,7 +1930,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @return string
 	 * @throws \Exception
 	 */
-	protected function getClassShortName(): string
+	public function getClassShortName(): string
 	{
 		return (new \ReflectionClass($this))->getShortName();
 	}
