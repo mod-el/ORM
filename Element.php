@@ -1248,12 +1248,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @return int
 	 * @throws \Exception
 	 */
-	function save(array $data = null, array $options = []): int
+	public function save(array $data = null, array $options = []): int
 	{
 		$options = array_merge([
 			'checkboxes' => false,
 			'children' => false,
 			'version' => null,
+			'form' => null,
 		], $options);
 
 		$existed = $this->exists();
@@ -1348,7 +1349,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			}
 
 			if ($id !== false) {
-				$form = $this->getForm();
+				$form = $options['form'] ?? $this->getForm();
 				$dataset = $form->getDataset();
 
 				foreach ($dataset as $k => $d) {
