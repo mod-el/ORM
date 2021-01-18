@@ -792,10 +792,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $i
 	 * @param int|string $id
 	 * @param array $options
+	 * @param bool $store
 	 * @return Element
-	 * @throws \Model\Core\Exception
 	 */
-	public function create(string $i, $id = 0, array $options = []): Element
+	public function create(string $i, $id = 0, array $options = [], bool $store = false): Element
 	{
 		if (!array_key_exists($i, $this->children_setup))
 			$this->model->error('No children set named ' . $i);
@@ -804,7 +804,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!$child or !$child['table'])
 			$this->model->error('Can\'t create new child "' . $i . '", missing table in the configuration');
 
-		if (!array_key_exists($i, $this->children_ar) or $this->children_ar[$i] === false)
+		if ($store and (!array_key_exists($i, $this->children_ar) or $this->children_ar[$i] === false))
 			$this->loadChildren($i);
 
 		switch ($child['type']) {
@@ -814,7 +814,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				$el = $this->getORM()->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 				$el->update([$child['primary'] => $id]);
-				$this->children_ar[$i] = $el;
+				if ($store)
+					$this->children_ar[$i] = $el;
 				return $el;
 				break;
 			case 'multiple':
@@ -828,7 +829,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$el = $this->getORM()->create('Element', ['parent' => $this, 'pre_loaded' => true, 'table' => $child['assoc']['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 					$el->update($data);
-					$this->children_ar[$i][] = $el;
+					if ($store)
+						$this->children_ar[$i][] = $el;
 					return $el;
 				} else {
 					if (!$child['field'])
@@ -840,7 +842,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$el = $this->getORM()->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 					$el->update($data);
-					$this->children_ar[$i][] = $el;
+					if ($store)
+						$this->children_ar[$i][] = $el;
 					return $el;
 				}
 				break;
