@@ -804,6 +804,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!$child or !$child['table'])
 			$this->model->error('Can\'t create new child "' . $i . '", missing table in the configuration');
 
+		if (!array_key_exists($i, $this->children_ar) or $this->children_ar[$i] === false)
+			$this->loadChildren($i);
+
 		switch ($child['type']) {
 			case 'single':
 				if (!$child['field'])
@@ -811,6 +814,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				$el = $this->getORM()->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 				$el->update([$child['primary'] => $id]);
+				$this->children_ar[$i] = $el;
 				return $el;
 				break;
 			case 'multiple':
@@ -824,6 +828,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$el = $this->getORM()->create('Element', ['parent' => $this, 'pre_loaded' => true, 'table' => $child['assoc']['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 					$el->update($data);
+					$this->children_ar[$i][] = $el;
 					return $el;
 				} else {
 					if (!$child['field'])
@@ -835,6 +840,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$el = $this->getORM()->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
 					$el->update($data);
+					$this->children_ar[$i][] = $el;
 					return $el;
 				}
 				break;
