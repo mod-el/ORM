@@ -53,9 +53,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	protected $replaceInDuplicate = [];
 
 	/** @var bool */
-	protected $_flagSaving = false; // It will assure the afterSave method will be called only once, even if save is re-called in it
+	public $_flagSaving = false; // It will assure the afterSave method will be called only once, even if save is re-called in it
 	/** @var bool */
 	protected $_flagLoading = false; // It will assure the load method will be called only once, to prevent infinite nesting loops
+	/** @var array */
+	public $lastAfterSaveData = null; // Contains last data to be passed to after save, used by admin module
 
 	/**
 	 * Element constructor.
@@ -1264,6 +1266,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'children' => false,
 			'version' => null,
 			'form' => null,
+			'afterSave' => true,
 		], $options);
 
 		$existed = $this->exists();
@@ -1529,9 +1532,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				if (!$this->_flagSaving) {
-					$this->_flagSaving = true;
-					$this->afterSave($previous_data, $real_save);
-					$this->_flagSaving = false;
+					$this->lastAfterSaveData = [
+						'previous_data' => $previous_data,
+						'saving' => $real_save
+					];
+
+					if ($options['afterSave']) {
+						$this->_flagSaving = true;
+						$this->afterSave($previous_data, $real_save);
+						$this->_flagSaving = false;
+					}
 				}
 			}
 
@@ -1559,7 +1569,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param bool|array $previous_data
 	 * @param array $saving
 	 */
-	protected function afterSave($previous_data, array $saving)
+	public function afterSave($previous_data, array $saving)
 	{
 	}
 
