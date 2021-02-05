@@ -186,7 +186,7 @@ class ORM extends Module
 
 		$arr = [];
 		foreach ($q as $r) {
-			if (($options['group_by'] ?? false) or ($options['sum'] ?? false) or ($options['max'] ?? false))
+			if ($this->isNonDistinctGrouped($options, $primary) or ($options['sum'] ?? false) or ($options['max'] ?? false))
 				$r[$primary] = 0;
 
 			if ($r[$primary] and isset($this->objects_cache[$element][$r[$primary]])) {
@@ -215,7 +215,7 @@ class ORM extends Module
 		$tableModel = $this->getDb()->getTable($table);
 
 		foreach ($q as $r) {
-			if (($options['group_by'] ?? false) or ($options['sum'] ?? false) or ($options['max'] ?? false))
+			if ($this->isNonDistinctGrouped($options, $tableModel->primary) or ($options['sum'] ?? false) or ($options['max'] ?? false))
 				$r[$tableModel->primary] = 0;
 
 			if ($tableModel->primary and $r[$tableModel->primary] and isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
@@ -226,6 +226,34 @@ class ORM extends Module
 
 			yield $obj;
 		}
+	}
+
+	/**
+	 * Check if query has a group_by different from the primary key
+	 *
+	 * @param array $options
+	 * @param string $primary
+	 * @return bool
+	 */
+	private function isNonDistinctGrouped(array $options, string $primary): bool
+	{
+		$isGrouped = false;
+		if ($options['group_by'] ?? false) {
+			$isGrouped = true;
+			$groupBy = explode(',', $options['group_by']);
+			if (count($groupBy) === 1) {
+				$groupBy = explode('.', $groupBy[0]);
+				if (count($groupBy) > 1)
+					$groupBy = end($groupBy);
+				else
+					$groupBy = $groupBy[0];
+
+				if ($groupBy === $primary)
+					$isGrouped = false;
+			}
+		}
+
+		return $isGrouped;
 	}
 
 	/**
