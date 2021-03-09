@@ -570,14 +570,24 @@ class Element implements \JsonSerializable, \ArrayAccess
 	protected function loadMultilangTexts()
 	{
 		if (!$this->flagMultilangLoaded) {
+			if (!$this->model->isLoaded('Multilang') or !array_key_exists($this->settings['table'], $this->model->_Multilang->tables))
+				return;
+
 			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']])) {
 				$texts = $this->getORM()->getDb()->getMultilangTexts($this->settings['table']);
 			} else {
 				$texts = $this->getORM()->getDb()->getMultilangTexts($this->settings['table'], $this[$this->settings['primary']]);
 			}
 
+			$multilangTable = $this->settings['table'] . $this->model->_Multilang->tables[$this->settings['table']]['suffix'];
+			$tableModel = $this->getORM()->getDb()->getTable($multilangTable);
+
 			foreach ($texts as $l => $r) {
 				foreach ($r as $k => $v) {
+					$column = $tableModel->columns[$k];
+					if (strtolower($column['type']) === 'text' and $v === null)
+						$v = '';
+
 					if (!isset($this->db_data_arr[$k]) or !is_array($this->db_data_arr[$k]))
 						$this->db_data_arr[$k] = [];
 					if (!isset($this->data_arr[$k]) or !is_array($this->data_arr[$k]))
@@ -1335,8 +1345,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 				foreach ($this->data_arr as $k => $v) { // If this is a new element, I'll save eventual data that does exist in the element but wasn't explicitly set
 					if ($k === $this->settings['primary'] or array_key_exists($k, $saving))
 						continue;
-					if (!array_key_exists($k, $this->db_data_arr))
-						$saving[$k] = $v;
+
+					$saving[$k] = $v;
 				}
 
 				foreach ($this->ar_autoIncrement as $k => $opt) {
