@@ -585,7 +585,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			foreach ($texts as $l => $r) {
 				foreach ($r as $k => $v) {
 					$column = $tableModel->columns[$k];
-					if (strtolower($column['type']) === 'text' and $v === null)
+					if (!$column['null'] and $v === null)
 						$v = '';
 
 					if (!isset($this->db_data_arr[$k]) or !is_array($this->db_data_arr[$k]))
