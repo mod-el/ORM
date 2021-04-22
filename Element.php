@@ -105,13 +105,25 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (is_object($this->settings['parent']) and (!$this->init_parent or !isset($this->init_parent['element']) or get_class($this->settings['parent']) == $this->init_parent['element']))
 			$this->parent = $this->settings['parent'];
 
-		$this->settings['fields'] = array_merge_recursive_distinct($this::$fields, $this->settings['fields']);
+		$fields = $this::$fields;
+		foreach ($fields as $fk => $f) {
+			if (!is_array($f))
+				$fields[$fk] = ['type' => $f];
+		}
+
 		foreach ($this->settings['fields'] as $fk => $f) {
 			if (!is_array($f))
-				$this->settings['fields'][$fk] = array('type' => $f);
-			if (!isset($this->settings['fields'][$fk]['type']))
-				$this->settings['fields'][$fk]['type'] = false;
+				$f = ['type' => $f];
+
+			$fields[$fk] = array_merge_recursive_distinct($fields[$fk] ?? [], $f);
 		}
+
+		foreach ($fields as $fk => $f) {
+			if (!isset($f['type']))
+				$fields[$fk]['type'] = false;
+		}
+
+		$this->settings['fields'] = $fields;
 
 		/* Backward compatibility */
 		$this->settings['files'] = array_merge_recursive_distinct($this::$files, $this->settings['files']);
@@ -380,11 +392,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	protected function belongsTo(string $el, array $options = [])
 	{
-		$options = array_merge(array(
+		$options = array_merge([
 			'element' => $el,
 			'field' => false,
 			'children' => false,
-		), $options);
+		], $options);
 		if ($options['field'] === false)
 			$options['field'] = strtolower(preg_replace('/(?<!^)([A-Z])/', '_\\1', $el));
 		$this->init_parent = $options;
@@ -1204,7 +1216,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if ($column['null'] and $v === '') {
 				$v = null;
 			} else {
-				if (in_array($column['type'], array('date', 'datetime'))) {
+				if (in_array($column['type'], ['date', 'datetime'])) {
 					if (is_object($v)) {
 						if (get_class($v) != 'DateTime')
 							$this->model->error('Only DateTime objects can be saved in a date or datetime field.');
@@ -1355,7 +1367,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						foreach ($opt['depending_on'] as $field)
 							$where[$field] = isset($saving[$field]) ? $saving[$field] : $this[$field];
 
-						$saving[$k] = ((int)$db->select($this->settings['table'], $where, array('max' => $k))) + 1;
+						$saving[$k] = ((int)$db->select($this->settings['table'], $where, ['max' => $k])) + 1;
 						$this[$k] = $saving[$k];
 					}
 				}
