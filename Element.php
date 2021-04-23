@@ -561,6 +561,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	{
 		if ($this->parent === false and $this->init_parent !== false) {
 			if (array_key_exists($this->init_parent['field'], $this->data_arr) and $this[$this->init_parent['field']]) {
+				// Avoiding loopholes
+				if (!empty($this->settings['previous_ids']) and !empty($this->data_arr['id']) and in_array($this->data_arr['id'], $this->settings['previous_ids']))
+					return;
+
 				$settings = [];
 				if ($this->init_parent['children']) {
 					$settings = [
@@ -571,6 +575,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 						],
 					];
 				}
+
+				// Avoiding loopholes
+				$settings['previous_ids'] = $this->settings['previous_ids'] ?? [];
+				if (!empty($this->data_arr['id']))
+					$settings['previous_ids'][] = $this->data_arr['id'];
+
 				$this->parent = $this->getORM()->one($this->init_parent['element'], $this[$this->init_parent['field']], $settings);
 			}
 		}
