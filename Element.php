@@ -1387,6 +1387,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$this->exists = true;
 				$this[$this->settings['primary']] = $id;
 
+				$this->db_data_arr = $real_save;
+				$this->db_data_arr[$this->settings['primary']] = $id;
+
 				$this->autoLoadParent();
 
 				$this->initChildren();
