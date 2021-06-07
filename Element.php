@@ -718,11 +718,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
-						if (isset($this->settings['pre_loaded_children'][$i][$c[$child['primary']]])) {
+						if (isset($this->settings['pre_loaded_children'][$i][$c[$child['primary']]]))
 							$this->children_ar[$i][$c[$child['primary']]] = $this->settings['pre_loaded_children'][$i][$c[$child['primary']]];
-						} else {
+						else
 							$this->children_ar[$i][$c[$child['primary']]] = $this->getORM()->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
-						}
 					}
 				}
 				break;
@@ -786,12 +785,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if (!$child['field'] or !array_key_exists($child['field'], $this->data_arr))
 					return false;
 
-				if (!$this[$child['field']]) {
+				if (!$this[$child['field']])
 					return 0;
-				} else {
+				else
 					return 1;
-				}
-				break;
 			case 'multiple':
 				$read_options = [];
 
@@ -813,10 +810,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					return $this->getORM()->getDb()->count($child['table'], $where, $read_options);
 				}
-				break;
 			default:
 				return null;
-				break;
 		}
 	}
 
@@ -827,9 +822,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param int|string $id
 	 * @param array $options
 	 * @param bool $store
-	 * @return Element
+	 * @return Element|null
 	 */
-	public function create(string $i, $id = 0, array $options = [], bool $store = false): Element
+	public function create(string $i, $id = 0, array $options = [], bool $store = false): ?Element
 	{
 		if (!array_key_exists($i, $this->children_setup))
 			$this->model->error('No children set named ' . $i);
@@ -844,14 +839,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 		switch ($child['type']) {
 			case 'single':
 				if (!$child['field'])
-					return false;
+					return null;
 
-				$el = $this->getORM()->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
+				$el = $this->getORM()->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
 				$el->update([$child['primary'] => $id]);
 				if ($store)
 					$this->children_ar[$i] = $el;
 				return $el;
-				break;
 			case 'multiple':
 				if ($child['assoc']) {
 					if (!($child['assoc']['table'] ?? null) or !($child['assoc']['parent'] ?? null) or !($child['assoc']['field'] ?? null))
@@ -861,7 +855,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$data[$child['assoc']['parent']] = $this[$this->settings['primary']];
 					$data[$child['primary']] = $id;
 
-					$el = $this->getORM()->create('Element', ['parent' => $this, 'pre_loaded' => true, 'table' => $child['assoc']['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
+					$el = $this->getORM()->create('Element', ['parent' => $this, 'pre_loaded' => true, 'table' => $child['assoc']['table'], 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
 					$el->update($data);
 					if ($store)
 						$this->children_ar[$i][] = $el;
@@ -874,13 +868,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$data[$child['field']] = $this[$this->settings['primary']];
 					$data[$child['primary']] = $id;
 
-					$el = $this->getORM()->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
+					$el = $this->getORM()->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
 					$el->update($data);
 					if ($store)
 						$this->children_ar[$i][] = $el;
 					return $el;
 				}
-				break;
 		}
 
 		$this->model->error('Can\'t create new child "' . $i . '", probable wrong configuration');
