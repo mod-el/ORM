@@ -1815,11 +1815,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 		foreach ($this->ar_orderBy['depending_on'] as $field) {
 			$parent = array_key_exists($field, $parentsValue) ? $parentsValue[$field] : $this[$field];
 			$parent_check = $this[$field] === null ? ' IS NULL' : '=' . $this->getORM()->getDb()->quote($parent);
-			$where[] = $this->getORM()->getDb()->makeSafe($field) . $parent_check;
+			$where[] = $this->getORM()->getDb()->parseField($field) . $parent_check;
 		}
-		$where[] = $this->getORM()->getDb()->makeSafe($this->ar_orderBy['field']) . '>' . $this->getORM()->getDb()->quote($oldOrder);
+		$where[] = $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '>' . $this->getORM()->getDb()->quote($oldOrder);
 
-		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->makeSafe($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->makeSafe($this->ar_orderBy['field']) . '=' . $this->getORM()->getDb()->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . implode(' AND ', $where));
+		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->parseField($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '=' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '-1 WHERE ' . implode(' AND ', $where));
 
 		return true;
 	}
@@ -2012,11 +2012,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
 
 		$sql = $this->getORM()->getDb()->makeSqlString($this->settings['table'], $where, ' AND ');
-		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->makeSafe($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->makeSafe($this->ar_orderBy['field']) . ' = ' . $this->getORM()->getDb()->makeSafe($this->ar_orderBy['field']) . '-1 WHERE ' . $sql);
+		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->parseField($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . ' = ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '-1 WHERE ' . $sql);
 
 		$where[$this->ar_orderBy['field']] = ['>=', $to];
 		$sql = $this->getORM()->getDb()->makeSqlString($this->settings['table'], $where, ' AND ');
-		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->makeSafe($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->makeSafe($this->ar_orderBy['field']) . ' = ' . $this->getORM()->getDb()->makeSafe($this->ar_orderBy['field']) . '+1 WHERE ' . $sql);
+		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->parseField($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . ' = ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '+1 WHERE ' . $sql);
 
 		$this->save([$this->ar_orderBy['field'] => $to]);
 
