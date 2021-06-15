@@ -688,7 +688,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$read_options = [];
 
 				if ($child['assoc']) {
-					$where = isset($child['assoc']['where']) ? $child['assoc']['where'] : [];
+					$where = array_merge($child['where'], $child['assoc']['where'] ?? []);
 					$where[$child['assoc']['parent']] = $this[$this->settings['primary']];
 					if (isset($child['assoc']['order_by'])) $read_options['order_by'] = $child['assoc']['order_by'];
 					if (isset($child['assoc']['joins'])) $read_options['joins'] = $child['assoc']['joins'];
@@ -699,7 +699,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
-						$new_child = $this->getORM()->one($child['element'], $c[$child['assoc']['field']], ['clone' => true, 'parent' => $this, 'table' => $child['table'], 'joins' => $child['joins'], 'options' => ['assoc' => $c], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+						$new_child = $this->getORM()->one($child['element'], $c[$child['assoc']['field']], [
+							'clone' => true,
+							'parent' => $this,
+							'table' => $child['table'],
+							'joins' => $child['joins'],
+							'options' => ['assoc' => $c],
+							'files' => $child['files'],
+							'fields' => $child['fields'],
+							'primary' => $child['primary'],
+							'assoc' => $child['assoc'],
+						]);
 						$this->children_ar[$i][$c[$child['primary']]] = $new_child;
 					}
 				} else {
@@ -718,10 +728,20 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
-						if (isset($this->settings['pre_loaded_children'][$i][$c[$child['primary']]]))
+						if (isset($this->settings['pre_loaded_children'][$i][$c[$child['primary']]])) {
 							$this->children_ar[$i][$c[$child['primary']]] = $this->settings['pre_loaded_children'][$i][$c[$child['primary']]];
-						else
-							$this->children_ar[$i][$c[$child['primary']]] = $this->getORM()->one($child['element'], $c, ['clone' => true, 'parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'joins' => $child['joins'], 'files' => $child['files'], 'fields' => $child['fields'], 'primary' => $child['primary']]);
+						} else {
+							$this->children_ar[$i][$c[$child['primary']]] = $this->getORM()->one($child['element'], $c, [
+								'clone' => true,
+								'parent' => $this,
+								'pre_loaded' => true,
+								'table' => $child['table'],
+								'joins' => $child['joins'],
+								'files' => $child['files'],
+								'fields' => $child['fields'],
+								'primary' => $child['primary'],
+							]);
+						}
 					}
 				}
 				break;
@@ -847,33 +867,48 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$this->children_ar[$i] = $el;
 				return $el;
 			case 'multiple':
+				if (!$child['field'])
+					$this->model->error('Can\'t create new child "' . $i . '", missing field in the configuration');
+
+				$data = [];
+				$assoc_data = [];
+
+				$elSettings = [
+					'parent' => $this,
+					'pre_loaded' => true,
+					'table' => $child['table'],
+					'files' => $child['files'],
+					'fields' => $child['fields'],
+					'joins' => $child['joins'],
+				];
+
 				if ($child['assoc']) {
 					if (!($child['assoc']['table'] ?? null) or !($child['assoc']['parent'] ?? null) or !($child['assoc']['field'] ?? null))
 						$this->model->error('Can\'t create new child: missing either table, or parent or field in the "assoc" parameter');
 
-					$data = $child['assoc']['where'] ?? [];
-					$data[$child['assoc']['parent']] = $this[$this->settings['primary']];
-					$data[$child['primary']] = $id;
+					$data[$child['primary']] = 0;
 
-					$el = $this->getORM()->create('Element', ['parent' => $this, 'pre_loaded' => true, 'table' => $child['assoc']['table'], 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
-					$el->update($data);
-					if ($store)
-						$this->children_ar[$i][] = $el;
-					return $el;
+					$assoc_data = array_merge($child['where'], $child['assoc']['where'] ?? []);
+					$assoc_data[$child['assoc']['parent']] = $this[$this->settings['primary']];
+					$assoc_data[$child['assoc']['primary'] ?? 'id'] = $id;
+					$assoc_data[$child['assoc']['field']] = 0;
+
+					$elSettings['assoc'] = $child['assoc'];
 				} else {
-					if (!$child['field'])
-						$this->model->error('Can\'t create new child "' . $i . '", missing field in the configuration');
-
 					$data = $child['where'];
 					$data[$child['field']] = $this[$this->settings['primary']];
 					$data[$child['primary']] = $id;
-
-					$el = $this->getORM()->create($child['element'], ['parent' => $this, 'pre_loaded' => true, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
-					$el->update($data);
-					if ($store)
-						$this->children_ar[$i][] = $el;
-					return $el;
 				}
+
+				$el = $this->getORM()->create($child['element'], $elSettings);
+				if ($data)
+					$el->update($data);
+				if ($assoc_data)
+					$el->options['assoc'] = $assoc_data;
+				if ($store)
+					$this->children_ar[$i][] = $el;
+
+				return $el;
 		}
 
 		$this->model->error('Can\'t create new child "' . $i . '", probable wrong configuration');
@@ -1073,10 +1108,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Integration with Form module
 	 *
+	 * @param bool $enableAssoc
 	 * @return Form
 	 * @throws \Model\Core\Exception
 	 */
-	public function getForm(): Form
+	public function getForm(bool $enableAssoc = false): Form
 	{
 		if (!$this->model->moduleExists('Form'))
 			$this->model->error('Missing required module "Form"');
@@ -1085,21 +1121,30 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->load();
 			$this->loadMultilangTexts();
 
+			$isAssoc = ($this->options['assoc'] ?? null) and $enableAssoc;
+
+			if ($isAssoc)
+				$tableName = $this->settings['assoc']['table'];
+			else
+				$tableName = $this->settings['table'];
+			if (!$tableName)
+				$this->model->error('Can\'t find table name in getForm method');
+
 			$formOptions = [
-				'table' => $this->settings['table'],
+				'table' => $tableName,
 				'element' => $this,
 				'model' => $this->model,
 			];
 
 			$this->form = new Form($formOptions);
 
-			$tableModel = $this->getORM()->getDb()->getTable($this->settings['table']);
+			$tableModel = $this->getORM()->getDb()->getTable($tableName);
 			if ($tableModel) {
 				$columns = $tableModel->columns;
 
 				$multilangColumns = [];
-				if ($this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
-					foreach ($this->model->_Multilang->tables[$this->settings['table']]['fields'] as $k) {
+				if ($this->model->isLoaded('Multilang') and array_key_exists($tableName, $this->model->_Multilang->tables)) {
+					foreach ($this->model->_Multilang->tables[$tableName]['fields'] as $k) {
 						$multilangColumns[] = $k;
 						$columns[$k] = null;
 					}
@@ -1109,20 +1154,22 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if ($ck == $this->settings['primary'] or $ck == 'zk_deleted' or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck))
 						continue;
 
-					foreach ($this->settings['fields'] as $field_for_check) {
-						if (
-							$field_for_check['type'] === 'file'
-							and (($field_for_check['name_db'] ?? null) === $ck or ($field_for_check['ext_db'] ?? null) === $ck)
-						)
-							continue 2;
+					if (!$isAssoc) {
+						foreach ($this->settings['fields'] as $field_for_check) {
+							if (
+								$field_for_check['type'] === 'file'
+								and (($field_for_check['name_db'] ?? null) === $ck or ($field_for_check['ext_db'] ?? null) === $ck)
+							)
+								continue 2;
+						}
 					}
 
 					$opt = [
 						'multilang' => in_array($ck, $multilangColumns),
-						'value' => $this->data_arr[$ck],
+						'value' => $isAssoc ? ($this->options['assoc'][$ck] ?? null) : $this->data_arr[$ck],
 					];
 
-					if (array_key_exists($ck, $this->settings['fields']))
+					if (!$isAssoc and array_key_exists($ck, $this->settings['fields']))
 						$opt = array_merge_recursive_distinct($opt, $this->settings['fields'][$ck]);
 					if (isset($opt['show']) and !$opt['show'])
 						continue;
@@ -1131,12 +1178,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			foreach ($this->settings['fields'] as $k => $f) {
-				if ($f['type'] !== 'file' and $f['type'] !== 'custom')
-					continue;
+			if (!$isAssoc) {
+				foreach ($this->settings['fields'] as $k => $f) {
+					if ($f['type'] !== 'file' and $f['type'] !== 'custom')
+						continue;
 
-				$f['element'] = $this;
-				$this->form->add($k, $f);
+					$f['element'] = $this;
+					$this->form->add($k, $f);
+				}
 			}
 		}
 
