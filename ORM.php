@@ -51,6 +51,7 @@ class ORM extends Module
 			'clone' => false,
 			'idx' => $this->module_id,
 			'pre_loaded' => false,
+			'assoc' => null,
 		], $options);
 
 		$elementShortName = $element;
@@ -91,7 +92,7 @@ class ORM extends Module
 
 					$id = $sel[$primary];
 
-					if (isset($this->objects_cache[$element][$id]) and !$options['clone'])
+					if (isset($this->objects_cache[$element][$id]) and !$options['clone'] and !$options['assoc'])
 						return $this->objects_cache[$element][$id];
 
 					$options['pre_loaded'] = true;
@@ -102,7 +103,7 @@ class ORM extends Module
 				if ($id !== false and !is_numeric($id))
 					$this->model->error('Tried to create an element with a non-numeric id.');
 
-				if ($id and isset($this->objects_cache[$element][$id]) and !$options['clone'])
+				if ($id and isset($this->objects_cache[$element][$id]) and !$options['clone'] and !$options['assoc'])
 					return $this->objects_cache[$element][$id];
 
 				$obj = new $element($id, $options);
@@ -110,7 +111,7 @@ class ORM extends Module
 					return false;
 			}
 
-			if (!$options['clone'])
+			if (!$options['clone'] and !$options['assoc'])
 				$this->objects_cache[$element][$id] = $obj;
 		} else {
 			$obj = new $element($where, $options);

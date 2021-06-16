@@ -77,6 +77,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'options' => [],
 			'files' => [], // Backward compatibility
 			'fields' => [], // For the form module
+			'assoc' => null,
 			'model' => false,
 			'idx' => 0,
 		], $settings);
@@ -105,7 +106,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (is_object($this->settings['parent']) and (!$this->init_parent or !isset($this->init_parent['element']) or get_class($this->settings['parent']) == $this->init_parent['element']))
 			$this->parent = $this->settings['parent'];
 
-		$fields = $this::$fields;
+		$fields = $this->settings['assoc'] ? [] : $this::$fields;
 		foreach ($fields as $fk => $f) {
 			if (!is_array($f))
 				$fields[$fk] = ['type' => $f];
@@ -126,7 +127,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$this->settings['fields'] = $fields;
 
 		/* Backward compatibility */
-		$this->settings['files'] = array_merge_recursive_distinct($this::$files, $this->settings['files']);
+		$this->settings['files'] = array_merge_recursive_distinct($this->settings['assoc'] ? [] : $this::$files, $this->settings['files']);
 		foreach ($this->settings['files'] as $fk => $f) {
 			if (!is_array($f))
 				$f['path'] = $f;
@@ -1154,14 +1155,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if ($ck == $this->settings['primary'] or $ck == 'zk_deleted' or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck))
 						continue;
 
-					if (!$isAssoc) {
-						foreach ($this->settings['fields'] as $field_for_check) {
-							if (
-								$field_for_check['type'] === 'file'
-								and (($field_for_check['name_db'] ?? null) === $ck or ($field_for_check['ext_db'] ?? null) === $ck)
-							)
-								continue 2;
-						}
+					foreach ($this->settings['fields'] as $field_for_check) {
+						if (
+							$field_for_check['type'] === 'file'
+							and (($field_for_check['name_db'] ?? null) === $ck or ($field_for_check['ext_db'] ?? null) === $ck)
+						)
+							continue 2;
 					}
 
 					$opt = [
@@ -1169,7 +1168,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						'value' => $isAssoc ? ($this->options['assoc'][$ck] ?? null) : $this->data_arr[$ck],
 					];
 
-					if (!$isAssoc and array_key_exists($ck, $this->settings['fields']))
+					if (array_key_exists($ck, $this->settings['fields']))
 						$opt = array_merge_recursive_distinct($opt, $this->settings['fields'][$ck]);
 					if (isset($opt['show']) and !$opt['show'])
 						continue;
@@ -1178,14 +1177,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			if (!$isAssoc) {
-				foreach ($this->settings['fields'] as $k => $f) {
-					if ($f['type'] !== 'file' and $f['type'] !== 'custom')
-						continue;
+			foreach ($this->settings['fields'] as $k => $f) {
+				if ($f['type'] !== 'file' and $f['type'] !== 'custom')
+					continue;
 
-					$f['element'] = $this;
-					$this->form->add($k, $f);
-				}
+				$f['element'] = $this;
+				$this->form->add($k, $f);
 			}
 		}
 
