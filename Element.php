@@ -1338,6 +1338,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'version' => null,
 			'form' => null,
 			'afterSave' => true,
+			'log' => true,
 		], $options);
 
 		$existed = $this->exists();
@@ -1393,6 +1394,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						$this->settings['primary'] => $this[$this->settings['primary']],
 					], $real_save, [
 						'version' => $options['version'],
+						'log' => $options['log'],
 					]);
 					if ($updating === false)
 						return false;
@@ -1422,7 +1424,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				$real_save = $saving;
-				$id = $db->insert($this->settings['table'], $saving);
+				$id = $db->insert($this->settings['table'], $saving, [
+					'log' => $options['log'],
+				]);
 				$this->exists = true;
 				$this[$this->settings['primary']] = $id;
 
