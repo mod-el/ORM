@@ -292,8 +292,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (is_array($this->data_arr[$offset])) {
 				if (count($this->data_arr[$offset]) === 0)
 					return null;
-				if ($this->model->isLoaded('Multilang') and isset($this->data_arr[$offset][$this->model->_Multilang->lang])) {
-					return $this->data_arr[$offset][$this->model->_Multilang->lang];
+				if ($this->model->isLoaded('Multilang')) {
+					$priorities = [$this->model->_Multilang->lang] + ($this->model->_Multilang->options['fallback'] ?: []);
+					foreach ($priorities as $lang) {
+						if (!empty($this->data_arr[$offset][$lang]))
+							return $this->data_arr[$offset][$lang];
+					}
+
+					return null;
 				} else {
 					if ($this->isArrayField($offset))
 						return $this->data_arr[$offset];
