@@ -602,11 +602,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (!$this->model->isLoaded('Multilang') or !array_key_exists($this->settings['table'], $this->model->_Multilang->tables))
 				return;
 
-			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']])) {
+			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']]))
 				$texts = $this->getORM()->getDb()->getMultilangTexts($this->settings['table']);
-			} else {
+			else
 				$texts = $this->getORM()->getDb()->getMultilangTexts($this->settings['table'], $this[$this->settings['primary']]);
-			}
 
 			$multilangTable = $this->settings['table'] . $this->model->_Multilang->tables[$this->settings['table']]['suffix'];
 			$tableModel = $this->getORM()->getDb()->getTable($multilangTable);
