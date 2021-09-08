@@ -6,58 +6,34 @@ use Model\Form\Form;
 
 class Element implements \JsonSerializable, \ArrayAccess
 {
-	/** @var array */
-	public $data_arr;
-	/** @var bool */
-	protected $flagMultilangLoaded = false;
-	/** @var array */
-	protected $db_data_arr = [];
-	/** @var array */
-	public $children_ar = [];
-	/** @var Element|bool */
-	public $parent = false;
-	/** @var array */
-	public $settings;
-	/** @var array */
-	public $options;
-	/** @var Core */
-	public $model;
-	/** @var Form() */
-	protected $form;
-	/** @var bool */
-	protected $loaded = false;
-	/** @var bool */
-	protected $exists = false;
-	/** @var bool */
-	public $destroyed = false;
+	public array $data_arr;
+	protected bool $flagMultilangLoaded = false;
+	protected array $db_data_arr = [];
+	public array $children_ar = [];
+	public ?Element $parent = null;
+	public array $settings;
+	public array $options;
+	public ?Core $model;
+	protected Form $form;
+	protected bool $loaded = false;
+	protected bool $exists = false;
+	public bool $destroyed = false;
 
-	/** @var string|null */
-	public static $table = null;
-	/** @var array */
-	public static $fields = [];
-	/** @var array */
-	public static $files = []; // Backward compatibility
-	/** @var string|null */
-	public static $controller = null;
+	public static ?string $table = null;
+	public static array $fields = [];
+	public static array $files = []; // Backward compatibility
+	public static ?string $controller = null;
 
-	/** @var array|bool */
-	protected $init_parent = false;
-	/** @var array */
-	protected $children_setup = [];
+	protected ?array $init_parent = null;
+	protected array $relationships = [];
 
-	/** @var array */
-	protected $ar_autoIncrement = [];
-	/** @var array */
-	protected $ar_orderBy = [];
-	/** @var array */
-	protected $replaceInDuplicate = [];
+	protected array $ar_autoIncrement = [];
+	protected array $ar_orderBy = [];
+	protected array $replaceInDuplicate = [];
 
-	/** @var bool */
-	public $_flagSaving = false; // It will assure the afterSave method will be called only once, even if save is re-called in it
-	/** @var bool */
-	protected $_flagLoading = false; // It will assure the load method will be called only once, to prevent infinite nesting loops
-	/** @var array */
-	public $lastAfterSaveData = null; // Contains last data to be passed to after save, used by admin module
+	public bool $_flagSaving = false; // It will assure the afterSave method will be called only once, even if save is re-called in it
+	protected bool $_flagLoading = false; // It will assure the load method will be called only once, to prevent infinite nesting loops
+	public array $lastAfterSaveData; // Contains last data to be passed to after save, used by admin module
 
 	/**
 	 * Element constructor.
@@ -70,7 +46,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$this->settings = array_merge([
 			'table' => null,
 			'primary' => null,
-			'parent' => false,
+			'parent' => null,
 			'pre_loaded' => false,
 			'pre_loaded_children' => [],
 			'defaults' => [],
@@ -78,7 +54,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'files' => [], // Backward compatibility
 			'fields' => [], // For the form module
 			'assoc' => null,
-			'model' => false,
+			'model' => null,
 			'idx' => 0,
 		], $settings);
 
@@ -103,7 +79,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		$this->init();
 
-		if (is_object($this->settings['parent']) and (!$this->init_parent or !isset($this->init_parent['element']) or get_class($this->settings['parent']) == $this->init_parent['element']))
+		if (is_object($this->settings['parent']) and (!isset($this->init_parent, $this->init_parent['element']) or get_class($this->settings['parent']) == $this->init_parent['element']))
 			$this->parent = $this->settings['parent'];
 
 		$fields = $this->settings['assoc'] ? [] : $this::$fields;
@@ -153,7 +129,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	private function initChildren()
 	{
-		foreach ($this->children_setup as $k => $child) {
+		foreach ($this->relationships as $k => $child) {
 			if (!isset($this->children_ar[$k]))
 				$this->children_ar[$k] = false;
 
@@ -181,8 +157,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function destroy()
 	{
 		$this->model = null;
-		if (is_object($this->parent))
+
+		if (isset($this->parent))
 			$this->parent = null;
+
 		foreach ($this->children_ar as $k => $ch) {
 			if (is_array($ch)) {
 				foreach ($ch as $ck => $c) {
@@ -197,6 +175,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 			$this->children_ar[$k] = false;
 		}
+
 		$this->settings = [];
 		$this->data_arr = [];
 		$this->exists = false;
@@ -213,7 +192,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function __get($i)
 	{
-		if (array_key_exists($i, $this->children_setup))
+		if (array_key_exists($i, $this->relationships))
 			return $this->children($i);
 		return null;
 	}
@@ -359,6 +338,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'primary' => null, // Primary field in the children table
 			'beforeSave' => null, // Format: function(array &$data)
 			'afterSave' => null, // Format: function($previous_data, array $saving)
+			'custom' => null, // Custom function that returns an array of children
 		], $options);
 
 		if ($options['field'] === null) {
@@ -388,7 +368,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			}
 		}
 
-		$this->children_setup[$name] = $options;
+		$this->relationships[$name] = $options;
 	}
 
 	/**
@@ -474,7 +454,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$this->beforeLoad($this->options);
 
 		if (!$this->loaded) {
-			if ($this->model === false)
+			if (!isset($this->model))
 				throw new \Model\Core\Exception('Model not provided for an istance of ' . get_class($this));
 
 			$this->exists = true;
@@ -566,7 +546,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	private function autoLoadParent()
 	{
-		if ($this->parent === false and $this->init_parent !== false) {
+		if (!isset($this->parent) and isset($this->init_parent)) {
 			if (array_key_exists($this->init_parent['field'], $this->data_arr) and $this[$this->init_parent['field']]) {
 				// Avoiding loopholes
 				if (!empty($this->settings['previous_ids']) and !empty($this->data_arr['id']) and in_array($this->data_arr['id'], $this->settings['previous_ids']))
@@ -646,7 +626,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		}
 		$this->load();
 		$return = ['exists' => $this->exists(), 'data' => $this->data_arr, 'options' => $this->options];
-		if ($this->parent !== false)
+		if (isset($this->parent))
 			$return['parent'] = ['element' => get_class($this->parent), 'id' => $this->parent[$this->parent->settings['primary']]];
 		return $return;
 	}
@@ -661,97 +641,110 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	protected function loadChildren(string $i, bool $use_loader = true): bool
 	{
-		if (!array_key_exists($i, $this->children_setup))
+		if (!array_key_exists($i, $this->relationships))
 			return false;
 
 		$this->load();
 
-		if ($use_loader and method_exists($this, 'load_' . $i))
+		if ($use_loader and method_exists($this, 'load_' . $i)) { // Backward compatibility
+			if (DEBUG_MODE)
+				throw new \Exception('load_* loader methods in ORM elements are deprecated');
+
 			return $this->{'load_' . $i}();
+		}
 
-		$child = $this->children_setup[$i];
+		$relationship = $this->relationships[$i];
 
-		if (!$child or !$child['table'])
+		if (!$relationship)
 			return false;
 
-		switch ($child['type']) {
+		if (!empty($relationship['custom']) and $use_loader) {
+			$this->children_ar[$i] = $relationship['custom']();
+			return true;
+		}
+
+		if (!$relationship['table'])
+			return false;
+
+		switch ($relationship['type']) {
 			case 'single':
-				if (!$child['field'] or !array_key_exists($child['field'], $this->data_arr))
+				if (!$relationship['field'] or !array_key_exists($relationship['field'], $this->data_arr))
 					return false;
-				if (!$this[$child['field']]) {
+				if (!$this[$relationship['field']]) {
 					$this->children_ar[$i] = false;
 					break;
 				}
 
-				if ($child['element'] !== 'Element')
-					$this->children_ar[$i] = $this->getORM()->one($child['element'], $this[$child['field']], ['files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
-				elseif ($child['table'])
-					$this->children_ar[$i] = $this->getORM()->one($child['element'], $this->getORM()->getDb()->select($child['table'], $this[$child['field']]), ['clone' => true, 'parent' => $this, 'joins' => $child['joins'], 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields']]);
+				if ($relationship['element'] !== 'Element')
+					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this[$relationship['field']], ['files' => $relationship['files'], 'fields' => $relationship['fields'], 'joins' => $relationship['joins']]);
+				elseif ($relationship['table'])
+					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this->getORM()->getDb()->select($relationship['table'], $this[$relationship['field']]), ['clone' => true, 'parent' => $this, 'joins' => $relationship['joins'], 'table' => $relationship['table'], 'files' => $relationship['files'], 'fields' => $relationship['fields']]);
 				else
 					return false;
 				break;
 			case 'multiple':
 				$read_options = [];
 
-				if ($child['assoc']) {
-					$where = array_merge($child['where'], $child['assoc']['where'] ?? []);
-					$where[$child['assoc']['parent']] = $this[$this->settings['primary']];
-					if (isset($child['assoc']['order_by'])) $read_options['order_by'] = $child['assoc']['order_by'];
-					if (isset($child['assoc']['joins'])) $read_options['joins'] = $child['assoc']['joins'];
+				if ($relationship['assoc']) {
+					$where = array_merge($relationship['where'], $relationship['assoc']['where'] ?? []);
+					$where[$relationship['assoc']['parent']] = $this[$this->settings['primary']];
+					if (isset($relationship['assoc']['order_by'])) $read_options['order_by'] = $relationship['assoc']['order_by'];
+					if (isset($relationship['assoc']['joins'])) $read_options['joins'] = $relationship['assoc']['joins'];
 					if (count($where) > 1)
-						$q = $this->getORM()->getDb()->select_all($child['assoc']['table'], $where, $read_options);
+						$q = $this->getORM()->getDb()->select_all($relationship['assoc']['table'], $where, $read_options);
 					else
-						$q = $this->getORM()->loadFromChildrenLoadingCache($child['assoc']['table'], $child['assoc']['parent'], $this[$this->settings['primary']], $child['primary'], $read_options);
+						$q = $this->getORM()->loadFromChildrenLoadingCache($relationship['assoc']['table'], $relationship['assoc']['parent'], $this[$this->settings['primary']], $relationship['primary'], $read_options);
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
-						$new_child = $this->getORM()->one($child['element'], $c[$child['assoc']['field']], [
+						$new_child = $this->getORM()->one($relationship['element'], $c[$relationship['assoc']['field']], [
 							'clone' => true,
 							'parent' => $this,
-							'table' => $child['table'],
-							'joins' => $child['joins'],
+							'table' => $relationship['table'],
+							'joins' => $relationship['joins'],
 							'options' => ['assoc' => $c],
-							'files' => $child['files'],
-							'fields' => $child['fields'],
-							'primary' => $child['primary'],
-							'assoc' => $child['assoc'],
+							'files' => $relationship['files'],
+							'fields' => $relationship['fields'],
+							'primary' => $relationship['primary'],
+							'assoc' => $relationship['assoc'],
 						]);
-						$this->children_ar[$i][$c[$child['primary']]] = $new_child;
+						$this->children_ar[$i][$c[$relationship['primary']]] = $new_child;
 					}
 				} else {
-					if (!$child['field'])
+					if (!$relationship['field'])
 						return false;
 
-					$where = $child['where'];
-					$where[$child['field']] = $this[$this->settings['primary']];
-					if ($child['order_by']) $read_options['order_by'] = $child['order_by'];
-					if ($child['joins']) $read_options['joins'] = $child['joins'];
+					$where = $relationship['where'];
+					$where[$relationship['field']] = $this[$this->settings['primary']];
+					if ($relationship['order_by']) $read_options['order_by'] = $relationship['order_by'];
+					if ($relationship['joins']) $read_options['joins'] = $relationship['joins'];
 
 					if (count($where) > 1)
-						$q = $this->getORM()->getDb()->select_all($child['table'], $where, $read_options);
+						$q = $this->getORM()->getDb()->select_all($relationship['table'], $where, $read_options);
 					else
-						$q = $this->getORM()->loadFromChildrenLoadingCache($child['table'], $child['field'], $this[$this->settings['primary']], $child['primary'], $read_options);
+						$q = $this->getORM()->loadFromChildrenLoadingCache($relationship['table'], $relationship['field'], $this[$this->settings['primary']], $relationship['primary'], $read_options);
 
 					$this->children_ar[$i] = [];
 					foreach ($q as $c) {
-						if (isset($this->settings['pre_loaded_children'][$i][$c[$child['primary']]])) {
-							$this->children_ar[$i][$c[$child['primary']]] = $this->settings['pre_loaded_children'][$i][$c[$child['primary']]];
+						if (isset($this->settings['pre_loaded_children'][$i][$c[$relationship['primary']]])) {
+							$this->children_ar[$i][$c[$relationship['primary']]] = $this->settings['pre_loaded_children'][$i][$c[$relationship['primary']]];
 						} else {
-							$this->children_ar[$i][$c[$child['primary']]] = $this->getORM()->one($child['element'], $c, [
+							$this->children_ar[$i][$c[$relationship['primary']]] = $this->getORM()->one($relationship['element'], $c, [
 								'clone' => true,
 								'parent' => $this,
 								'pre_loaded' => true,
-								'table' => $child['table'],
-								'joins' => $child['joins'],
-								'files' => $child['files'],
-								'fields' => $child['fields'],
-								'primary' => $child['primary'],
+								'table' => $relationship['table'],
+								'joins' => $relationship['joins'],
+								'files' => $relationship['files'],
+								'fields' => $relationship['fields'],
+								'primary' => $relationship['primary'],
 							]);
 						}
 					}
 				}
 				break;
 		}
+
 		return true;
 	}
 
@@ -760,8 +753,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function reloadChildren(string $i)
 	{
-		if (!array_key_exists($i, $this->children_setup))
+		if (!array_key_exists($i, $this->relationships))
 			return;
+
 		$this->children_ar[$i] = false;
 	}
 
@@ -774,7 +768,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	protected function children(string $i)
 	{
-		if (!array_key_exists($i, $this->children_setup))
+		if (!array_key_exists($i, $this->relationships))
 			return null;
 
 		if (!$this->loaded)
@@ -795,13 +789,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function count(string $i)
 	{
-		if (!array_key_exists($i, $this->children_setup))
+		if (!array_key_exists($i, $this->relationships))
 			return null;
 
 		if (!$this->loaded)
 			$this->load();
 
-		$child = $this->children_setup[$i];
+		$child = $this->relationships[$i];
 
 		if (!$child or !$child['table'])
 			return null;
@@ -852,9 +846,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function create(string $i, $id = 0, array $options = [], bool $store = false): ?Element
 	{
-		if (!array_key_exists($i, $this->children_setup))
+		if (!array_key_exists($i, $this->relationships))
 			$this->model->error('No children set named ' . $i);
-		$child = $this->children_setup[$i];
+		$child = $this->relationships[$i];
 
 		if (!$child or !$child['table'])
 			$this->model->error('Can\'t create new child "' . $i . '", missing table in the configuration');
@@ -1123,7 +1117,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!$this->model->moduleExists('Form'))
 			$this->model->error('Missing required module "Form"');
 
-		if (!$this->form) {
+		if (!isset($this->form)) {
 			$this->load();
 			$this->loadMultilangTexts();
 
@@ -1299,7 +1293,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this[$k] = $v;
 		}
 
-		if ($this->form)
+		if (isset($this->form))
 			$this->form->setValues($data);
 
 		$this->afterUpdate($saving);
@@ -1453,7 +1447,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				if ($options['children']) {
-					foreach ($this->children_setup as $ck => $ch) {
+					foreach ($this->relationships as $ck => $ch) {
 						if (!$ch['save'])
 							continue;
 
@@ -1706,9 +1700,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 			}
 		}
 
-		$nome_el = Autoloader::searchFile('Element', $this->children_setup[$ch]['element']);
+		$nome_el = Autoloader::searchFile('Element', $this->relationships[$ch]['element']);
 		$fields = ($nome_el and isset($nome_el::$fields)) ? $nome_el::$fields : [];
-		$fields = array_merge_recursive_distinct($fields, $this->children_setup[$ch]['fields']);
+		$fields = array_merge_recursive_distinct($fields, $this->relationships[$ch]['fields']);
 
 		if ($checkboxes) {
 			foreach ($fields as $k => $t) { // I look for the checkboxes, they behave in a different way in post data: if the key exists, it's 1, otherwise 0
@@ -1770,9 +1764,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				$this->afterDelete();
-				if ($this[$this->settings['primary']] and $this->parent and $this->init_parent and $this->init_parent['children']) {
+				if ($this[$this->settings['primary']] and isset($this->parent, $this->init_parent) and $this->init_parent['children'])
 					unset($this->parent->children_ar[$this->init_parent['children']][$this[$this->settings['primary']]]);
-				}
 			} else {
 				$this->model->error('Can\t delete, not allowed.');
 			}
@@ -1820,7 +1813,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	{
 		$this->load();
 		$children = [];
-		foreach ($this->children_setup as $ck => $ch) {
+		foreach ($this->relationships as $ck => $ch) {
 			if ($ch['beforeSave'])
 				$ch['beforeSave'] = true;
 			if ($ch['afterSave'])
@@ -1829,10 +1822,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 				unset($ch['fields']);
 			if (isset($ch['files']))
 				unset($ch['files']);
+			if (isset($ch['custom']))
+				unset($ch['custom']);
 
 			$ch['relation'] = $ck;
 			$children[] = $ch;
 		}
+
 		return [
 			'table' => $this->settings['table'],
 			'primary' => $this->settings['primary'],
@@ -2002,7 +1998,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			foreach ($this->children_setup as $k => $children) {
+			foreach ($this->relationships as $k => $children) {
 				if ($children['type'] != 'multiple' or !$children['duplicable'])
 					continue;
 				foreach ($this->children($k) as $ch) {
@@ -2044,8 +2040,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function getChildrenOptions(string $ch)
 	{
-		if (isset($this->children_setup[$ch]))
-			return $this->children_setup[$ch];
+		if (isset($this->relationships[$ch]))
+			return $this->relationships[$ch];
 		else
 			return null;
 	}
