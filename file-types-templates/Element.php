@@ -4,7 +4,7 @@ use Model\ORM\Element;
 
 class {name} extends Element
 {
-	public static $table = '{table}';
+	public static ?string $table = '{table}';
 
 	public function init()
 	{
