@@ -338,7 +338,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'primary' => null, // Primary field in the children table
 			'beforeSave' => null, // Format: function(array &$data)
 			'afterSave' => null, // Format: function($previous_data, array $saving)
-			'custom' => null, // Custom function that returns an array of children
+			'custom' => null, // Custom function that returns an iterable of children
 		], $options);
 
 		if ($options['field'] === null) {
