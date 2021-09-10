@@ -568,7 +568,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if (!empty($this->data_arr['id']))
 					$settings['previous_ids'][] = $this->data_arr['id'];
 
-				$this->parent = $this->getORM()->one($this->init_parent['element'], $this[$this->init_parent['field']], $settings);
+				$this->parent = $this->getORM()->one($this->init_parent['element'], $this[$this->init_parent['field']], $settings) ?: null;
 			}
 		}
 	}
