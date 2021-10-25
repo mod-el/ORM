@@ -238,11 +238,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function offsetSet($offset, $value)
 	{
 		$this->load();
-		if (is_null($offset)) {
+		if (is_null($offset))
 			$this->model->error('Element value set: invalid offset.');
-		} else {
+		else
 			$this->data_arr[$offset] = $value;
-		}
 	}
 
 	public function offsetExists($offset)
@@ -902,7 +901,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				$el = $this->getORM()->create($child['element'], $elSettings);
 				if ($data)
-					$el->update($data);
+					$el->update($data, ['load' => false]);
 				if ($assoc_data)
 					$el->options['assoc'] = $assoc_data;
 				if ($store)
@@ -1203,22 +1202,24 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $data
 	 * @param array $options
 	 * @return array
-	 * @throws \Model\Core\Exception
 	 */
 	public function update(array $data, array $options = []): array
 	{
 		$options = array_merge([
 			'checkboxes' => false,
 			'children' => false,
+			'load' => true,
 		], $options);
 
-		$this->load();
+		if ($options['load'])
+			$this->load();
 
 		if ($options['checkboxes']) {
 			$form = $this->getForm();
 			foreach ($form->getDataset() as $k => $d) {
-				if ($d->options['type'] != 'checkbox') continue;
-				$data[$k] = isset($data[$k]) ? $data[$k] : 0;
+				if ($d->options['type'] !== 'checkbox')
+					continue;
+				$data[$k] = $data[$k] ?? 0;
 			}
 		}
 
@@ -1242,17 +1243,15 @@ class Element implements \JsonSerializable, \ArrayAccess
 		foreach ($data as $k => $v) {
 			if (in_array($k, $multilangKeys)) { // In case of multilang columns, I only update the current language in the element
 				$column = $multilangTableModel->columns[$k];
-				if (is_array($v)) {
-					$saving[$k] = $v;
+				$saving[$k] = $v;
 
+				if (is_array($v)) {
 					if (array_key_exists($this->model->_Multilang->lang, $v)) {
 						$dontUpdateSaving = true;
 						$v = $v[$this->model->_Multilang->lang];
 					} else {
 						continue;
 					}
-				} else {
-					$saving[$k] = $v;
 				}
 			} elseif (in_array($k, $keys) or $k === $this->settings['primary']) {
 				$column = $tableModel->columns[$k];
@@ -1290,7 +1289,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 			if (!$dontUpdateSaving)
 				$saving[$k] = $v;
-			$this[$k] = $v;
+			$this->data_arr[$k] = $v;
 		}
 
 		if (isset($this->form))
