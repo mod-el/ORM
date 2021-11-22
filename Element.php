@@ -659,6 +659,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		if (!empty($relationship['custom']) and $use_loader) {
 			$this->children_ar[$i] = $relationship['custom']();
+			if (!empty($relationship['fields']) or !empty($relationship['files'])) {
+				foreach ($this->children_ar[$i] as $item) {
+					$item->settings['fields'] = array_merge($item->settings['fields'] ?? [], $relationship['fields']);
+					$item->settings['files'] = array_merge($item->settings['files'] ?? [], $relationship['files']);
+				}
+			}
 			return true;
 		}
 
