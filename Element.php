@@ -2065,14 +2065,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 		foreach ($this->ar_orderBy['depending_on'] as $field)
 			$where[$field] = $this[$field];
 
-		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
+		$db = $this->getORM()->getDb();
+		$parsedTable = $db->parseField($this->settings['table']);
+		$parsedField = $db->parseField($this->ar_orderBy['field']);
 
-		$sql = $this->getORM()->getDb()->makeSqlString($this->settings['table'], $where, ' AND ');
-		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->parseField($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . ' = ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '-1 WHERE ' . $sql);
+		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
+		$sql = $db->makeSqlString($this->settings['table'], $where, ' AND ');
+		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '-1 WHERE ' . $sql);
 
 		$where[$this->ar_orderBy['field']] = ['>=', $to];
-		$sql = $this->getORM()->getDb()->makeSqlString($this->settings['table'], $where, ' AND ');
-		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->parseField($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . ' = ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '+1 WHERE ' . $sql);
+		$sql = $db->makeSqlString($this->settings['table'], $where, ' AND ');
+		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '+1 WHERE ' . $sql);
 
 		$this->save([$this->ar_orderBy['field'] => $to]);
 
