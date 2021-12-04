@@ -1341,6 +1341,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'children' => false,
 			'version' => null,
 			'form' => null,
+			'saveForm' => false,
 			'afterSave' => true,
 			'log' => true,
 		], $options);
@@ -1443,12 +1444,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 			}
 
 			if ($id !== false) {
-				$form = $options['form'] ?? $this->getForm();
-				$dataset = $form->getDataset();
+				if ($options['saveForm']) {
+					$form = $options['form'] ?? $this->getForm();
+					$dataset = $form->getDataset();
 
-				foreach ($dataset as $k => $d) {
-					if (array_key_exists($k, $data))
-						$d->save($data[$k]);
+					foreach ($dataset as $k => $d) {
+						if (array_key_exists($k, $data))
+							$d->save($data[$k]);
+					}
 				}
 
 				if ($options['children']) {
@@ -1764,9 +1767,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				$form = $this->getForm();
 				$dataset = $form->getDataset();
-				foreach ($dataset as $d) {
+				foreach ($dataset as $d)
 					$d->delete();
-				}
 
 				$this->afterDelete();
 				if ($this[$this->settings['primary']] and isset($this->parent, $this->init_parent) and $this->init_parent['children'])
