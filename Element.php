@@ -1998,9 +1998,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$newPaths = $this->getFilePath($k, ['allPaths' => true, 'fakeElement' => $newEl]);
 
 					foreach ($paths as $i => $p) {
-						if (file_exists(INCLUDE_PATH . $p)) {
+						if (file_exists(INCLUDE_PATH . $p) and !is_dir(INCLUDE_PATH . $p))
 							copy(INCLUDE_PATH . $p, INCLUDE_PATH . $newPaths[$i]);
-						}
 					}
 				}
 			}
@@ -2008,8 +2007,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 			foreach ($this->relationships as $k => $children) {
 				if ($children['type'] != 'multiple' or !$children['duplicable'])
 					continue;
+
 				foreach ($this->children($k) as $ch) {
-					$ch->duplicate([$children['field'] => $newEl[$this->settings['primary']]]);
+					if (!empty($children['assoc'])) {
+						$data = $ch->options['assoc'];
+						unset($data[$children['assoc']['primary'] ?? 'id']);
+						$data[$children['assoc']['parent']] = $newEl[$this->settings['primary']];
+						$this->model->insert($children['assoc']['table'], $data);
+					} else {
+						$ch->duplicate([$children['field'] => $newEl[$this->settings['primary']]]);
+					}
 				}
 			}
 
