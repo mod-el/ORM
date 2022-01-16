@@ -235,7 +235,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 	/* ArrayAccess implementations */
 
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		$this->load();
 		if (is_null($offset))
@@ -244,18 +244,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->data_arr[$offset] = $value;
 	}
 
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		$this->load();
 		return isset($this->data_arr[$offset]);
 	}
 
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
-		return false;
 	}
 
-	public function offsetGet($offset)
+	public function offsetGet($offset): mixed
 	{
 		$this->load();
 		if (strlen($offset) > 3 and $offset[2] === ':' and $this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
@@ -612,9 +611,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Implementation of JsonSerializable, for debugging purposes
 	 *
 	 * @return array
-	 * @throws \Model\Core\Exception
 	 */
-	public function jsonSerialize()
+	public function jsonSerialize(): mixed
 	{
 		if ($this->destroyed) {
 			return [
@@ -636,7 +634,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $i
 	 * @param bool $use_loader
 	 * @return bool
-	 * @throws \Model\Core\Exception
 	 */
 	protected function loadChildren(string $i, bool $use_loader = true): bool
 	{
