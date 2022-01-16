@@ -1672,7 +1672,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if (!is_array($v) or json_encode($this->db_data_arr[$k]) !== json_encode($v))
 						$real_save[$k] = $v;
 				} else {
-					if (is_array($v) or $this->getORM()->getDb()->quote($this->db_data_arr[$k]) !== $this->getORM()->getDb()->quote($v))
+					if (is_array($v) or $this->getORM()->getDb()->quote($this->db_data_arr[$k] ?: '') !== $this->getORM()->getDb()->quote($v ?: ''))
 						$real_save[$k] = $v;
 				}
 			}
@@ -1869,10 +1869,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$where = [];
 		foreach ($this->ar_orderBy['depending_on'] as $field) {
 			$parent = array_key_exists($field, $parentsValue) ? $parentsValue[$field] : $this[$field];
-			$parent_check = $this[$field] === null ? ' IS NULL' : '=' . $this->getORM()->getDb()->quote($parent);
+			$parent_check = $this[$field] === null ? ' IS NULL' : '=' . $this->getORM()->getDb()->quote($parent ?: '');
 			$where[] = $this->getORM()->getDb()->parseField($field) . $parent_check;
 		}
-		$where[] = $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '>' . $this->getORM()->getDb()->quote($oldOrder);
+		$where[] = $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '>' . $this->getORM()->getDb()->quote($oldOrder ?: '0');
 
 		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->parseField($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '=' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '-1 WHERE ' . implode(' AND ', $where));
 
