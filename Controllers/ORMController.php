@@ -36,11 +36,10 @@ class ORMController extends Controller
 				if (!method_exists($el, $method))
 					$this->model->error('Invalid action');
 
-				if (isAssoc($data)) {
-					$ris = call_user_func(array($el, $method), $data);
-				} else {
-					$ris = call_user_func_array(array($el, $method), $data);
-				}
+				if (isAssoc($data))
+					$ris = call_user_func([$el, $method], $data);
+				else
+					$ris = call_user_func_array([$el, $method], $data);
 
 				$this->model->_Db->commit();
 
