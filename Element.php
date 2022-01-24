@@ -1123,7 +1123,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->load();
 			$this->loadMultilangTexts();
 
-			$isAssoc = ($this->options['assoc'] ?? null) and $enableAssoc;
+			$isAssoc = $enableAssoc ? ($this->options['assoc'] ?? null) : false;
 
 			if ($isAssoc)
 				$tableName = $this->settings['assoc']['table'];
