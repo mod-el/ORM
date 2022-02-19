@@ -21,6 +21,11 @@ $controllers = [];
 		});
 	}
 
+	public function getConfigData(): ?array
+	{
+		return [];
+	}
+
 	/**
 	 * I create the $elements and $controllers array, trying to cache as many data as possible (which controller is associated to which Element, which table, which is the parent of which, etc...)
 	 *
