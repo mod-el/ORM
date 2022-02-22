@@ -36,7 +36,7 @@ $controllers = [];
 		$elementsData = Autoloader::getFilesByType('Element');
 
 		$elements = [];
-		foreach ($elementsData as $moduleName => $classes) {
+		foreach ($elementsData as $classes) {
 			foreach ($classes as $name => $className) {
 				$obj = new $className(false, ['model' => $this->model]);
 				$elements[$name] = $obj->getElementTreeData();
@@ -50,11 +50,10 @@ $controllers = [];
 				$unique = true;
 				foreach ($elements[$data['parent']['element']]['children'] as $p_ch_k => $p_ch) {
 					if ($p_ch['element'] == $el) {
-						if ($found) {
+						if ($found)
 							$unique = false;
-						} else {
+						else
 							$found = $p_ch_k;
-						}
 					}
 				}
 				if ($found and $unique)
@@ -69,10 +68,16 @@ $controllers = [];
 			}
 		}
 
-		return (bool)file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php', '<?php
+		$bytesWritten = file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php', '<?php
 $elements = ' . var_export($elements, true) . ';
 $controllers = ' . var_export($controllers, true) . ';
 ');
+		if (!$bytesWritten)
+			return false;
+
+		$this->model->_ORM->flushElementsTreeCache();
+
+		return true;
 	}
 
 	/**

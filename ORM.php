@@ -6,14 +6,10 @@ use Model\Db\Db;
 
 class ORM extends Module
 {
-	/** @var Element */
-	public $element = null;
-	/** @var array */
-	protected $objects_cache = [];
-	/** @var array */
-	protected $children_loading = [];
-	/** @var array */
-	protected $elements_tree = null;
+	public ?Element $element = null;
+	protected array $objects_cache = [];
+	protected array $children_loading = [];
+	protected ?array $elements_tree;
 
 	/**
 	 * @param mixed $options
@@ -430,12 +426,12 @@ class ORM extends Module
 	/**
 	 * Returns the cached elements data (false if not found)
 	 *
-	 * @return array|bool
+	 * @return ?array
 	 */
-	public function getElementsTree()
+	public function getElementsTree(): ?array
 	{
-		if ($this->elements_tree === null) {
-			$this->elements_tree = false;
+		if (!isset($this->elements_tree)) {
+			$this->elements_tree = null;
 
 			if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php')) {
 				include(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php');
@@ -450,13 +446,21 @@ class ORM extends Module
 		return $this->elements_tree;
 	}
 
+	public function flushElementsTreeCache()
+	{
+		unset($this->elements_tree);
+	}
+
 	/**
 	 * @param string $element
 	 * @return array|null
 	 */
-	public function getElementData(string $element)
+	public function getElementData(string $element): ?array
 	{
 		$elements_tree = $this->getElementsTree();
+		if (!$elements_tree)
+			return null;
+
 		return $elements_tree['elements'][$element] ?? null;
 	}
 
