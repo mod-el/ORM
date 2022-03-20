@@ -1960,7 +1960,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$data = array_merge($data, $replace);
 
 			$newEl = $this->getORM()->create($this->getClassShortName(), ['table' => $this->settings['table']]);
-			$newEl->save($data);
+			$newEl->save($data, ['afterSave' => false]);
 
 			if ($this->model->isLoaded('Multilang')) {
 				$mlTable = $this->model->_Multilang->getTableFor($this->settings['table']);
@@ -2016,6 +2016,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 					}
 				}
 			}
+
+			$newEl->afterSave(false, $data);
 
 			$this->getORM()->getDb()->commit();
 
