@@ -5,7 +5,7 @@ use Model\Core\Controller;
 
 class ORMController extends Controller
 {
-	function index()
+	public function index()
 	{
 		try {
 			$this->model->_Db->beginTransaction();

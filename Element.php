@@ -679,10 +679,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				if ($relationship['element'] !== 'Element')
 					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this[$relationship['field']], ['files' => $relationship['files'], 'fields' => $relationship['fields'], 'joins' => $relationship['joins']]);
-				elseif ($relationship['table'])
-					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this->getORM()->getDb()->select($relationship['table'], $this[$relationship['field']]), ['clone' => true, 'parent' => $this, 'joins' => $relationship['joins'], 'table' => $relationship['table'], 'files' => $relationship['files'], 'fields' => $relationship['fields']]);
 				else
-					return false;
+					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this->getORM()->getDb()->select($relationship['table'], $this[$relationship['field']]), ['clone' => true, 'parent' => $this, 'joins' => $relationship['joins'], 'table' => $relationship['table'], 'files' => $relationship['files'], 'fields' => $relationship['fields']]);
 				break;
 			case 'multiple':
 				$read_options = [];
