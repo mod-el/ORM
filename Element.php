@@ -311,14 +311,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Sets the rules for a set of children
 	 *
 	 * @param string $name
-	 * @param array|string $options
+	 * @param array $options
 	 * @throws \Exception
 	 */
-	protected function has(string $name, $options = [])
+	protected function has(string $name, array $options = [])
 	{
-		if (!is_array($options))
-			$options = ['element' => $options];
-
 		$options = array_merge([
 			'type' => 'multiple', // "multiple" o "single"
 			'element' => 'Element', // Element class
@@ -334,8 +331,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'files' => [], // Backward compatibility
 			'duplicable' => true, // Can be duplicated?
 			'primary' => null, // Primary field in the children table
-			'beforeSave' => null, // Format: function(array &$data)
-			'afterSave' => null, // Format: function($previous_data, array $saving)
+			'beforeSave' => null, // Signature: function(array &$data)
+			'afterSave' => null, // Signature: function($previous_data, array $saving)
+			'afterGet' => null, // Signature: function(array $items)
 			'custom' => null, // Custom function that returns an iterable of children
 		], $options);
 
@@ -633,12 +631,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param string $i
 	 * @param bool $use_loader
-	 * @return bool
 	 */
-	protected function loadChildren(string $i, bool $use_loader = true): bool
+	protected function loadChildren(string $i, bool $use_loader = true)
 	{
 		if (!array_key_exists($i, $this->relationships))
-			return false;
+			return;
 
 		$this->load();
 
@@ -646,13 +643,15 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (DEBUG_MODE)
 				throw new \Exception('load_* loader methods in ORM elements are deprecated');
 
-			return $this->{'load_' . $i}();
+			$this->{'load_' . $i}();
+
+			return;
 		}
 
 		$relationship = $this->relationships[$i];
 
 		if (!$relationship)
-			return false;
+			return;
 
 		if (!empty($relationship['custom']) and $use_loader) {
 			$this->children_ar[$i] = $relationship['custom']();
@@ -662,16 +661,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$item->settings['files'] = array_merge($item->settings['files'] ?? [], $relationship['files']);
 				}
 			}
-			return true;
+			return;
 		}
 
 		if (!$relationship['table'])
-			return false;
+			return;
 
 		switch ($relationship['type']) {
 			case 'single':
 				if (!$relationship['field'] or !array_key_exists($relationship['field'], $this->data_arr))
-					return false;
+					return;
+
 				if (!$this[$relationship['field']]) {
 					$this->children_ar[$i] = false;
 					break;
@@ -712,7 +712,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					}
 				} else {
 					if (!$relationship['field'])
-						return false;
+						return;
 
 					$where = $relationship['where'];
 					$where[$relationship['field']] = $this[$this->settings['primary']];
@@ -745,7 +745,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 				break;
 		}
 
-		return true;
+		if ($this->children_ar[$i] and $relationship['afterGet'])
+			$this->children_ar[$i] = $relationship['afterGet']($this->children_ar[$i]);
 	}
 
 	/**
