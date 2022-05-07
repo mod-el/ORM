@@ -1,10 +1,10 @@
 {
 	"name": "ORM",
 	"description": "Elements management",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"dependencies": {
 		"Core": ">=2.10.0",
-		"Db": ">=2.1.0",
+		"Db": ">=3.0.0",
 		"Form": ">=1.5.0",
 		"RandToken": ">=0.2.0"
 	},

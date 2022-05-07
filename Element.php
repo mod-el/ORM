@@ -65,7 +65,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		$tableModel = $this->getORM()->getDb()->getTable($this->settings['table']);
 		if ($this->settings['primary'] === null)
-			$this->settings['primary'] = $tableModel->primary;
+			$this->settings['primary'] = $tableModel->primary[0];
 
 		if (!is_array($data)) {
 			$data = [
@@ -358,7 +358,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if ($options['primary'] === null) {
 			if ($options['table']) {
 				$tableModel = $this->getORM()->getDb()->getTable($options['table']);
-				$options['primary'] = $tableModel->primary;
+				$options['primary'] = $tableModel->primary[0];
 			} else {
 				$options['primary'] = 'id';
 			}
@@ -1975,7 +1975,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						]);
 
 						if ($row) {
-							unset($row[$mlTableModel->primary]);
+							unset($row[$mlTableModel->primary[0]]);
 							unset($row[$mlOptions['keyfield']]);
 							unset($row[$mlOptions['lang']]);
 

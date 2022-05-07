@@ -63,7 +63,7 @@ class ORM extends Module
 				} else {
 					$tableModel = $this->getDb()->getTable($table);
 
-					$primary = $tableModel->primary;
+					$primary = $tableModel->primary[0];
 
 					$tree = $this->getElementsTree();
 					if (isset($tree['elements'][$elementShortName])) {
@@ -173,7 +173,7 @@ class ORM extends Module
 
 		$tableModel = $this->getDb()->getTable($table);
 
-		$primary = $tableModel->primary;
+		$primary = $tableModel->primary[0];
 
 		if (isset($tree['elements'][$elementShortName])) {
 			$el_data = $tree['elements'][$elementShortName];
@@ -212,11 +212,11 @@ class ORM extends Module
 		$tableModel = $this->getDb()->getTable($table);
 
 		foreach ($q as $r) {
-			if ($this->isNonDistinctGrouped($options, $tableModel->primary) or ($options['sum'] ?? false) or ($options['max'] ?? false))
-				$r[$tableModel->primary] = 0;
+			if ($this->isNonDistinctGrouped($options, $tableModel->primary[0]) or ($options['sum'] ?? false) or ($options['max'] ?? false))
+				$r[$tableModel->primary[0]] = 0;
 
-			if ($tableModel->primary and $r[$tableModel->primary] and isset($this->objects_cache[$element][$r[$tableModel->primary]])) {
-				$obj = $this->objects_cache[$element][$r[$tableModel->primary]];
+			if ($tableModel->primary[0] and $r[$tableModel->primary[0]] and isset($this->objects_cache[$element][$r[$tableModel->primary[0]]])) {
+				$obj = $this->objects_cache[$element][$r[$tableModel->primary[0]]];
 			} else {
 				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
 			}
