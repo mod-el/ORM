@@ -1671,7 +1671,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if (!is_array($v) or json_encode($this->db_data_arr[$k]) !== json_encode($v))
 						$real_save[$k] = $v;
 				} else {
-					if (is_array($v) or $this->getORM()->getDb()->quote($this->db_data_arr[$k] ?: '') !== $this->getORM()->getDb()->quote($v ?: ''))
+					if (is_array($v) or $this->getORM()->getDb()->parseValue($this->db_data_arr[$k]) !== $this->getORM()->getDb()->parseValue($v))
 						$real_save[$k] = $v;
 				}
 			}
