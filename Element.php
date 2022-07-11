@@ -1139,7 +1139,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 			$this->form = new Form($formOptions);
 
-			$tableModel = $this->getORM()->getDb()->getTable($tableName);
+			$db = $this->getORM()->getDb();
+			$tableModel = $db->getTable($tableName);
 			if ($tableModel) {
 				$columns = $tableModel->columns;
 
@@ -1152,8 +1153,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				foreach ($columns as $ck => $cc) {
-					if ($ck == $this->settings['primary'] or $ck == 'zk_deleted' or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck))
+					if (
+						$ck === $this->settings['primary']
+						or $ck === 'zk_deleted'
+						or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck)
+						or ($db->options['tenant-filter'] and $db->options['tenant-filter']['column'] === $ck)
+					) {
 						continue;
+					}
 
 					foreach ($this->settings['fields'] as $field_for_check) {
 						if (
