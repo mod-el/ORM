@@ -2,7 +2,7 @@
 
 use Model\Core\Autoloader;
 use Model\Core\Module;
-use Model\Db\Db;
+use Model\Db\DbOld;
 
 class ORM extends Module
 {
@@ -506,9 +506,9 @@ class ORM extends Module
 	}
 
 	/**
-	 * @return Db
+	 * @return DbOld
 	 */
-	public function getDb(): Db
+	public function getDb(): DbOld
 	{
 		$db = $this->model->getModule('Db', $this->module_id);
 		if (!$db)
