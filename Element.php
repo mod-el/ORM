@@ -23,6 +23,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public static array $fields = [];
 	public static array $files = []; // Backward compatibility
 	public static ?string $controller = null;
+	protected static ?array $dbs = null;
 
 	protected ?array $init_parent = null;
 	protected array $relationships = [];
@@ -57,6 +58,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'model' => null,
 			'idx' => 0,
 		], $settings);
+
+		if ($this::$dbs) {
+			if ($this->settings['idx'] === 0 and !in_array('primary', $this::$dbs))
+				$this->settings['idx'] = $this::$dbs[0];
+
+			if ($this->settings['idx'] !== 0 and !in_array($this->settings['idx'], $this::$dbs))
+				throw new \Exception('Db ' . $this->settings['idx'] . ' non existent');
+		}
 
 		$this->model = $this->settings['model'];
 
