@@ -257,7 +257,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function offsetGet($offset): mixed
 	{
 		$this->load();
-		if (strlen($offset) > 3 and $offset[2] === ':' and $this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
+		if (strlen($offset) > 3 and $offset[2] === ':' and class_exists('\\Model\\Multilang\\Ml') and array_key_exists($this->settings['table'], \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection()))) {
 			$this->loadMultilangTexts();
 
 			$offset_arr = explode(':', $offset);
@@ -575,7 +575,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	protected function loadMultilangTexts()
 	{
 		if (!$this->flagMultilangLoaded) {
-			if (!$this->model->isLoaded('Multilang') or !array_key_exists($this->settings['table'], $this->model->_Multilang->tables))
+			if (!class_exists('\\Model\\Multilang\\Ml'))
+				return;
+
+			$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection());
+			if (!array_key_exists($this->settings['table'], $mlTables))
 				return;
 
 			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']]))
@@ -583,7 +587,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			else
 				$texts = $this->getORM()->getDb()->getMultilangTexts($this->settings['table'], $this[$this->settings['primary']]);
 
-			$multilangTable = $this->settings['table'] . $this->model->_Multilang->tables[$this->settings['table']]['suffix'];
+			$multilangTable = $this->settings['table'] . $mlTables[$this->settings['table']]['table_suffix'];
 			$tableModel = $this->getORM()->getDb()->getTable($multilangTable);
 
 			foreach ($texts as $l => $r) {
@@ -1145,10 +1149,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$columns = $tableModel->columns;
 
 				$multilangColumns = [];
-				if ($this->model->isLoaded('Multilang') and array_key_exists($tableName, $this->model->_Multilang->tables)) {
-					foreach ($this->model->_Multilang->tables[$tableName]['fields'] as $k) {
-						$multilangColumns[] = $k;
-						$columns[$k] = null;
+				if (class_exists('\\Model\\Multilang\\Ml')) {
+					$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection());
+					if (array_key_exists($tableName, $mlTables)) {
+						foreach ($mlTables[$tableName]['fields'] as $k) {
+							$multilangColumns[] = $k;
+							$columns[$k] = null;
+						}
 					}
 				}
 
@@ -1241,10 +1248,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$this->model->error('Can\'t find cached table model for "' . $this->settings['table'] . '"');
 
 		$multilangKeys = [];
-		if ($this->model->isLoaded('Multilang') and array_key_exists($this->settings['table'], $this->model->_Multilang->tables)) {
-			$multilangTable = $this->settings['table'] . $this->model->_Multilang->tables[$this->settings['table']]['suffix'];
-			$multilangTableModel = $this->getORM()->getDb()->getTable($multilangTable);
-			$multilangKeys = $this->model->_Multilang->tables[$this->settings['table']]['fields'];
+		if (class_exists('\\Model\\Multilang\\Ml')) {
+			$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection());
+			if (array_key_exists($this->settings['table'], $mlTables)) {
+				$multilangTable = $this->settings['table'] . $mlTables[$this->settings['table']]['table_suffix'];
+				$multilangTableModel = $this->getORM()->getDb()->getTable($multilangTable);
+				$multilangKeys = $mlTables[$this->settings['table']]['fields'];
+			}
 		}
 
 		$saving = [];
@@ -1973,11 +1983,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$newEl = $this->getORM()->create($this->getClassShortName(), ['table' => $this->settings['table']]);
 			$newEl->save($data, ['afterSave' => false]);
 
-			if ($this->model->isLoaded('Multilang')) {
-				$mlTable = $this->model->_Multilang->getTableFor($this->settings['table']);
+			if (class_exists('\\Model\\Multilang\\Ml')) {
+				$dbConnection = $this->getORM()->getDb()->getConnection();
+				$mlTable = \Model\Multilang\Ml::getTableFor($dbConnection, $this->settings['table']);
 				if ($mlTable) {
-					$mlOptions = $this->model->_Multilang->getTableOptionsFor($this->settings['table']);
-					$mlTableModel = $this->getORM()->getDb()->getTable($mlTable);
+					$mlOptions = \Model\Multilang\Ml::getTableOptionsFor($dbConnection, $this->settings['table']);
+					$mlTableModel = $dbConnection->getParser()->getTable($mlTable);
 					foreach ($this->model->_Multilang->langs as $lang) {
 						$row = $this->getORM()->getDb()->select($mlTable, [
 							$mlOptions['keyfield'] => $this[$this->settings['primary']],
