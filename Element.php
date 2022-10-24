@@ -1989,7 +1989,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if ($mlTable) {
 					$mlOptions = \Model\Multilang\Ml::getTableOptionsFor($dbConnection, $this->settings['table']);
 					$mlTableModel = $dbConnection->getParser()->getTable($mlTable);
-					foreach ($this->model->_Multilang->langs as $lang) {
+					foreach (\Model\Multilang\Ml::getLangs() as $lang) {
 						$row = $this->getORM()->getDb()->select($mlTable, [
 							$mlOptions['keyfield'] => $this[$this->settings['primary']],
 							$mlOptions['lang'] => $lang,
