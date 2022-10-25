@@ -269,8 +269,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (is_array($this->data_arr[$offset])) {
 				if (count($this->data_arr[$offset]) === 0)
 					return null;
-				if ($this->model->isLoaded('Multilang')) {
-					$priorities = [$this->model->_Multilang->lang] + ($this->model->_Multilang->options['fallback'] ?: []);
+				if (class_exists('\\Model\\Multilang\\Ml')) {
+					$priorities = [\Model\Multilang\Ml::getLang()] + ($this->model->_Multilang->options['fallback'] ?: []);
 					foreach ($priorities as $lang) {
 						if (!empty($this->data_arr[$offset][$lang]))
 							return $this->data_arr[$offset][$lang];
@@ -1029,8 +1029,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if ($this::$controller === null)
 			return null;
 
-		$def_lang = $this->model->isLoaded('Multilang') ? $this->model->_Multilang->lang : 'it';
-		if (!isset($tags['lang']) or !$this->model->isLoaded('Multilang') or $tags['lang'] == $def_lang) {
+		$def_lang = class_exists('\\Model\\Multilang\\Ml') ? \Model\Multilang\Ml::getLang() : 'it';
+		if (!isset($tags['lang']) or !class_exists('\\Model\\Multilang\\Ml') or $tags['lang'] == $def_lang) {
 			$this->load();
 			$opt['fields'] = $this->data_arr;
 
@@ -1265,9 +1265,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$saving[$k] = $v;
 
 				if (is_array($v)) {
-					if (array_key_exists($this->model->_Multilang->lang, $v)) {
+					if (array_key_exists(\Model\Multilang\Ml::getLang(), $v)) {
 						$dontUpdateSaving = true;
-						$v = $v[$this->model->_Multilang->lang];
+						$v = $v[\Model\Multilang\Ml::getLang()];
 					} else {
 						continue;
 					}
