@@ -201,13 +201,13 @@ class ORM extends Module
 	/**
 	 * Method used by "all" with "stream" option, returns a generator of requested elements
 	 *
-	 * @param \Generator $q
+	 * @param iterable $q
 	 * @param string $element
 	 * @param string $table
 	 * @param array $options
 	 * @return \Generator
 	 */
-	private function elementsGenerator(\Generator $q, string $element, string $table, array $options): \Generator
+	private function elementsGenerator(iterable $q, string $element, string $table, array $options): \Generator
 	{
 		$tableModel = $this->getDb()->getTable($table);
 
