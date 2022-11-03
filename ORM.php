@@ -83,7 +83,7 @@ class ORM extends Module
 						unset($dbOptions['fields']);
 
 					$sel = $this->getDb()->select($table, $where, $dbOptions);
-					if ($sel === false)
+					if (!$sel)
 						return false;
 
 					$id = $sel[$primary];
