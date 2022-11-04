@@ -237,7 +237,7 @@ class ORM extends Module
 		$isGrouped = false;
 		if ($options['group_by'] ?? false) {
 			$isGrouped = true;
-			$groupBy = explode(',', $options['group_by']);
+			$groupBy = is_array($options['group_by']) ? $options['group_by'] : explode(',', $options['group_by']);
 			if (count($groupBy) === 1) {
 				$groupBy = explode('.', $groupBy[0]);
 				if (count($groupBy) > 1)
