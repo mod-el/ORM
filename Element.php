@@ -1903,12 +1903,22 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
+	 * @param string|null $fIdx
+	 * @param array $options
+	 * @return bool
+	 */
+	public function fileExists(string $fIdx = null, array $options = []): bool
+	{
+		$path = $this->getFilePath($fIdx, $options);
+		return ($path and file_exists(INCLUDE_PATH . $path));
+	}
+
+	/**
 	 * Gets the path of one of the file (or the first one if no index is provided) - false on failure
 	 *
-	 * @param string $fIdx
+	 * @param string|null $fIdx
 	 * @param array $options
 	 * @return string|bool
-	 * @throws \Model\Core\Exception
 	 */
 	public function getFilePath(string $fIdx = null, array $options = [])
 	{
