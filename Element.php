@@ -1424,8 +1424,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 			} else {
 				$previous_data = false;
 
+				$tableModel = $this->getORM()->getDb()->getTable($this->getTable());
 				foreach ($this->data_arr as $k => $v) { // If this is a new element, I'll save eventual data that does exist in the element but wasn't explicitly set
-					if ($k === $this->settings['primary'] or array_key_exists($k, $saving))
+					if ($k === $this->settings['primary'] or array_key_exists($k, $saving) or !isset($tableModel->columns[$k]) or str_contains($tableModel->columns[$k]['extra'], 'GENERATED'))
 						continue;
 
 					$saving[$k] = $v;
