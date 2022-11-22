@@ -455,15 +455,15 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 			$this->exists = true;
 			if (!$this->settings['pre_loaded']) {
-				$temp_data = false;
+				$temp_data = null;
 				if ($this->settings['table'] and isset($this[$this->settings['primary']]) and $this[$this->settings['primary']] !== false) {
 					if ($this[$this->settings['primary']] === false)
-						$temp_data = false;
+						$temp_data = null;
 					else
 						$temp_data = $this->getORM()->getDb()->select($this->settings['table'], [$this->settings['primary'] => $this[$this->settings['primary']]]);
 				}
 
-				if ($temp_data === false) {
+				if ($temp_data === null) {
 					$this->exists = false;
 				} else {
 					$this->data_arr = $temp_data;
