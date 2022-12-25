@@ -2112,12 +2112,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$parsedTable = $db->parseField($this->settings['table']);
 		$parsedField = $db->parseField($this->ar_orderBy['field']);
 
+		$builder = \Model\Db\Db::getConnection()->getBuilder();
+
 		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
-		$sql = $db->makeSqlString($this->settings['table'], $where, ' AND ');
+		$sql = $builder->buildQueryString($where, ['operator' => 'AND']);
 		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '-1 WHERE ' . $sql);
 
 		$where[$this->ar_orderBy['field']] = ['>=', $to];
-		$sql = $db->makeSqlString($this->settings['table'], $where, ' AND ');
+		$sql = $builder->buildQueryString($where, ['operator' => 'AND']);
 		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '+1 WHERE ' . $sql);
 
 		$this->save([$this->ar_orderBy['field'] => $to]);
