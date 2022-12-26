@@ -2,7 +2,8 @@
 
 use Model\Core\Autoloader;
 use Model\Core\Module;
-use Model\Db\DbOld;
+use Model\Db\Db;
+use Model\Db\DbConnection;
 use Model\Db\Events\ChangedTable;
 use Model\Events\Events;
 
@@ -161,14 +162,14 @@ class ORM extends Module
 		if (isset($tree['elements'][$elementShortName])) {
 			$el_data = $tree['elements'][$elementShortName];
 			if ($el_data['order_by'] and (!isset($options['order_by']) or !$options['order_by']))
-				$options['order_by'] = $this->stringOrderBy($el_data['order_by']);
+				$options['order_by'] = $this->parseOrderBy($el_data['order_by']);
 		}
 
 		$dbOptions = $options;
 		if (isset($dbOptions['fields']))
 			unset($dbOptions['fields']);
 
-		$q = $this->getDb()->select_all($table, $where, $dbOptions);
+		$q = $this->getDb()->selectAll($table, $where, $dbOptions);
 
 		if ($options['stream'])
 			return $this->elementsGenerator($q, $element, $table, $options);
@@ -297,19 +298,19 @@ class ORM extends Module
 	}
 
 	/**
-	 * Utility function that convert an array of order by (like the ones stored in the cache) to a usable sql string
+	 * Utility function that convert an array of order by (like the ones stored in the cache) to a usable array for the query builder
 	 *
 	 * @param array $orderBy
-	 * @return string
+	 * @return array
 	 */
-	private function stringOrderBy(array $orderBy): string
+	private function parseOrderBy(array $orderBy): array
 	{
 		$arr = [];
 		foreach ($orderBy['depending_on'] as $field)
 			$arr[] = $field;
 		$arr[] = $orderBy['field'];
 
-		return implode(',', $arr);
+		return $arr;
 	}
 
 	/* "CHILDREN LOADING CACHE" METHODS */
@@ -361,9 +362,9 @@ class ORM extends Module
 			$read_options['order_by'] = $primary;
 
 		if (count($this->children_loading[$table][$parent_field]['hasToLoad']) == 1) {
-			$q = $this->getDb()->select_all($table, [$parent_field => $this->children_loading[$table][$parent_field]['hasToLoad'][0]], $read_options);
+			$q = $this->getDb()->selectAll($table, [$parent_field => $this->children_loading[$table][$parent_field]['hasToLoad'][0]], $read_options);
 		} else {
-			$q = $this->getDb()->select_all($table, [
+			$q = $this->getDb()->selectAll($table, [
 				$parent_field => ['in', $this->children_loading[$table][$parent_field]['hasToLoad']],
 			], $read_options);
 		}
@@ -508,13 +509,10 @@ class ORM extends Module
 	}
 
 	/**
-	 * @return DbOld
+	 * @return DbConnection
 	 */
-	public function getDb(): DbOld
+	public function getDb(): DbConnection
 	{
-		$db = $this->model->getModule('Db', $this->module_id);
-		if (!$db)
-			$this->model->error('Cannot load Db module from ORM');
-		return $db;
+		return Db::getConnection((string)$this->module_id === '0' ? 'primary' : $this->module_id);
 	}
 }

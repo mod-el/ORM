@@ -257,7 +257,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	public function offsetGet($offset): mixed
 	{
 		$this->load();
-		if (strlen($offset) > 3 and $offset[2] === ':' and class_exists('\\Model\\Multilang\\Ml') and array_key_exists($this->settings['table'], \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection()))) {
+		if (strlen($offset) > 3 and $offset[2] === ':' and class_exists('\\Model\\Multilang\\Ml') and array_key_exists($this->settings['table'], \Model\Multilang\Ml::getTables($this->getORM()->getDb()))) {
 			$this->loadMultilangTexts();
 
 			$offset_arr = explode(':', $offset);
@@ -578,14 +578,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (!class_exists('\\Model\\Multilang\\Ml'))
 				return;
 
-			$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection());
+			$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb());
 			if (!array_key_exists($this->settings['table'], $mlTables))
 				return;
 
 			if (!isset($this[$this->settings['primary']]) or !is_numeric($this[$this->settings['primary']]))
-				$texts = $this->getORM()->getDb()->getMultilangTexts($this->settings['table']);
+				$texts = \Model\Multilang\Ml::getMultilangTexts($this->getORM()->getDb(), $this->settings['table']);
 			else
-				$texts = $this->getORM()->getDb()->getMultilangTexts($this->settings['table'], $this[$this->settings['primary']]);
+				$texts = \Model\Multilang\Ml::getMultilangTexts($this->getORM()->getDb(), $this->settings['table'], $this[$this->settings['primary']]);
 
 			$multilangTable = $this->settings['table'] . $mlTables[$this->settings['table']]['table_suffix'];
 			$tableModel = $this->getORM()->getDb()->getTable($multilangTable);
@@ -695,7 +695,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if (isset($relationship['assoc']['order_by'])) $read_options['order_by'] = $relationship['assoc']['order_by'];
 					if (isset($relationship['assoc']['joins'])) $read_options['joins'] = $relationship['assoc']['joins'];
 					if (count($where) > 1)
-						$q = $this->getORM()->getDb()->select_all($relationship['assoc']['table'], $where, $read_options);
+						$q = $this->getORM()->getDb()->selectAll($relationship['assoc']['table'], $where, $read_options);
 					else
 						$q = $this->getORM()->loadFromChildrenLoadingCache($relationship['assoc']['table'], $relationship['assoc']['parent'], $this[$this->settings['primary']], $relationship['primary'], $read_options);
 
@@ -724,7 +724,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					if ($relationship['joins']) $read_options['joins'] = $relationship['joins'];
 
 					if (count($where) > 1)
-						$q = $this->getORM()->getDb()->select_all($relationship['table'], $where, $read_options);
+						$q = $this->getORM()->getDb()->selectAll($relationship['table'], $where, $read_options);
 					else
 						$q = $this->getORM()->loadFromChildrenLoadingCache($relationship['table'], $relationship['field'], $this[$this->settings['primary']], $relationship['primary'], $read_options);
 
@@ -1150,7 +1150,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 				$multilangColumns = [];
 				if (class_exists('\\Model\\Multilang\\Ml')) {
-					$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection());
+					$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb());
 					if (array_key_exists($tableName, $mlTables)) {
 						foreach ($mlTables[$tableName]['fields'] as $k) {
 							$multilangColumns[] = $k;
@@ -1159,12 +1159,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 					}
 				}
 
+				$tenantColumn = class_exists('\\Model\\Multitenancy\\MultiTenancy') ? \Model\Multitenancy\MultiTenancy::getTenantColumn($db->getName(), $tableName) : null;
 				foreach ($columns as $ck => $cc) {
 					if (
 						$ck === $this->settings['primary']
 						or $ck === 'zk_deleted'
 						or ($this->ar_orderBy and $this->ar_orderBy['custom'] and $this->ar_orderBy['field'] === $ck)
-						or ($db->options['tenant-filter'] and $db->options['tenant-filter']['column'] === $ck)
+						or ($tenantColumn and $tenantColumn === $ck)
 					) {
 						continue;
 					}
@@ -1249,7 +1250,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		$multilangKeys = [];
 		if (class_exists('\\Model\\Multilang\\Ml')) {
-			$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb()->getConnection());
+			$mlTables = \Model\Multilang\Ml::getTables($this->getORM()->getDb());
 			if (array_key_exists($this->settings['table'], $mlTables)) {
 				$multilangTable = $this->settings['table'] . $mlTables[$this->settings['table']]['table_suffix'];
 				$multilangTableModel = $this->getORM()->getDb()->getTable($multilangTable);
@@ -1890,15 +1891,17 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!$this->ar_orderBy)
 			return false;
 
+		$db = $this->getORM()->getDb();
+
 		$where = [];
 		foreach ($this->ar_orderBy['depending_on'] as $field) {
 			$parent = array_key_exists($field, $parentsValue) ? $parentsValue[$field] : $this[$field];
-			$parent_check = $this[$field] === null ? ' IS NULL' : '=' . $this->getORM()->getDb()->quote($parent ?: '');
-			$where[] = $this->getORM()->getDb()->parseField($field) . $parent_check;
+			$parent_check = $this[$field] === null ? ' IS NULL' : '=' . $db->parseValue($parent ?: '');
+			$where[] = $db->parseColumn($field) . $parent_check;
 		}
-		$where[] = $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '>' . $this->getORM()->getDb()->quote($oldOrder ?: '0');
+		$where[] = $db->parseColumn($this->ar_orderBy['field']) . '>' . $db->parseValue($oldOrder ?: '0');
 
-		$this->getORM()->getDb()->query('UPDATE ' . $this->getORM()->getDb()->parseField($this->settings['table']) . ' SET ' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '=' . $this->getORM()->getDb()->parseField($this->ar_orderBy['field']) . '-1 WHERE ' . implode(' AND ', $where));
+		$db->query('UPDATE ' . $db->parseColumn($this->settings['table']) . ' SET ' . $db->parseColumn($this->ar_orderBy['field']) . '=' . $db->parseColumn($this->ar_orderBy['field']) . '-1 WHERE ' . implode(' AND ', $where));
 
 		return true;
 	}
@@ -1997,13 +2000,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$newEl->save($data, ['afterSave' => false]);
 
 			if (class_exists('\\Model\\Multilang\\Ml')) {
-				$dbConnection = $this->getORM()->getDb()->getConnection();
-				$mlTable = \Model\Multilang\Ml::getTableFor($dbConnection, $this->settings['table']);
+				$db = $this->getORM()->getDb();
+				$mlTable = \Model\Multilang\Ml::getTableFor($db, $this->settings['table']);
 				if ($mlTable) {
-					$mlOptions = \Model\Multilang\Ml::getTableOptionsFor($dbConnection, $this->settings['table']);
-					$mlTableModel = $dbConnection->getParser()->getTable($mlTable);
+					$mlOptions = \Model\Multilang\Ml::getTableOptionsFor($db, $this->settings['table']);
+					$mlTableModel = $db->getParser()->getTable($mlTable);
 					foreach (\Model\Multilang\Ml::getLangs() as $lang) {
-						$row = $this->getORM()->getDb()->select($mlTable, [
+						$row = $db->select($mlTable, [
 							$mlOptions['keyfield'] => $this[$this->settings['primary']],
 							$mlOptions['lang'] => $lang,
 						]);
@@ -2013,7 +2016,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 							unset($row[$mlOptions['keyfield']]);
 							unset($row[$mlOptions['lang']]);
 
-							$this->getORM()->getDb()->update($mlTable, [
+							$db->update($mlTable, [
 								$mlOptions['keyfield'] => $newEl[$this->settings['primary']],
 								$mlOptions['lang'] => $lang,
 							], $row);
@@ -2109,18 +2112,16 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$where[$field] = $this[$field];
 
 		$db = $this->getORM()->getDb();
-		$parsedTable = $db->parseField($this->settings['table']);
-		$parsedField = $db->parseField($this->ar_orderBy['field']);
-
-		$builder = \Model\Db\Db::getConnection()->getBuilder();
+		$parsedTable = $db->parseColumn($this->settings['table']);
+		$parsedField = $db->parseColumn($this->ar_orderBy['field']);
 
 		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
-		$sql = $builder->buildQueryString($where, ['operator' => 'AND']);
-		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '-1 WHERE ' . $sql);
+		$sql = $db->getBuilder()->buildQueryString($where, ['operator' => 'AND']);
+		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '-1 WHERE ' . $sql, $this->settings['table'], 'UPDATE');
 
 		$where[$this->ar_orderBy['field']] = ['>=', $to];
-		$sql = $builder->buildQueryString($where, ['operator' => 'AND']);
-		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '+1 WHERE ' . $sql);
+		$sql = $db->getBuilder()->buildQueryString($where, ['operator' => 'AND']);
+		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '+1 WHERE ' . $sql, $this->settings['table'], 'UPDATE');
 
 		$this->save([$this->ar_orderBy['field'] => $to]);
 
