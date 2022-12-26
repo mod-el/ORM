@@ -3,6 +3,8 @@
 use Model\Core\Autoloader;
 use Model\Core\Module;
 use Model\Db\DbOld;
+use Model\Db\Events\ChangedTable;
+use Model\Events\Events;
 
 class ORM extends Module
 {
@@ -16,9 +18,9 @@ class ORM extends Module
 	 */
 	function init(array $options)
 	{
-		$this->model->on('Db_changedTable', function ($data) {
-			if (array_key_exists($data['table'], $this->children_loading)) {
-				foreach ($this->children_loading[$data['table']] as &$cache) {
+		Events::subscribeTo(ChangedTable::class, function (ChangedTable $event) {
+			if (array_key_exists($event->table, $this->children_loading)) {
+				foreach ($this->children_loading[$event->table] as &$cache) {
 					$cache['hasToLoad'] = $cache['ids'];
 					$cache['results'] = [];
 				}
