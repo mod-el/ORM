@@ -1993,6 +1993,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 					unset($data[$k]);
 			}
 
+			$tableModel = $this->getORM()->getDb()->getTable($this->settings['table']);
+			foreach ($data as $k => $v) {
+				if (isset($tableModel->columns[$k]) and str_contains($tableModel->columns[$k]['extra'], 'GENERATED'))
+					unset($data[$k]);
+			}
+
 			$data = array_merge($data, $this->replaceInDuplicate);
 			$data = array_merge($data, $replace);
 
