@@ -1685,7 +1685,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	{
 		$real_save = [];
 		foreach ($data as $k => $v) {
-			if (isset($this->settings['fields'][$k]) and $this->settings['fields'][$k]['type'] === 'file')
+			if (isset($this->settings['fields'][$k]) and is_array($v) and $this->settings['fields'][$k]['type'] === 'file')
 				continue;
 
 			if (!array_key_exists($k, $this->db_data_arr)) {
