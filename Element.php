@@ -1433,11 +1433,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$saving[$k] = $v;
 				}
 
+				$saving = $this->filterDataToSave($saving);
+
 				foreach ($this->ar_autoIncrement as $k => $opt) {
 					if (!isset($saving[$k]) or !$saving[$k]) {
 						$where = [];
 						foreach ($opt['depending_on'] as $field)
-							$where[$field] = isset($saving[$field]) ? $saving[$field] : $this[$field];
+							$where[$field] = $saving[$field] ?? $this[$field];
 
 						$q = $db->select($this->settings['table'], $where, ['max' => $k]);
 						$saving[$k] = (int)($q ? $q[$k] : 0) + 1;
