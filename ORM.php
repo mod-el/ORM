@@ -193,7 +193,8 @@ class ORM extends Module
 				$obj = $this->objects_cache[$element][$r[$primary]];
 			} else {
 				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
-				$this->objects_cache[$element][$r[$primary]] = $obj;
+				if (empty($options['joins']))
+					$this->objects_cache[$element][$r[$primary]] = $obj;
 			}
 
 			$arr[] = $obj;
