@@ -2,7 +2,10 @@
 
 use Model\Core\Autoloader;
 use Model\Core\Core;
+use Model\Events\Events;
 use Model\Form\Form;
+use Model\ORM\Events\OrmDelete;
+use Model\ORM\Events\OrmSave;
 
 class Element implements \JsonSerializable, \ArrayAccess
 {
@@ -1361,13 +1364,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 		], $options);
 
 		$existed = $this->exists();
-		$this->getORM()->trigger('saving', [
-			'element' => $this->getClassShortName(),
-			'id' => $this['id'],
-			'data' => $data,
-			'options' => $options,
-			'exists' => $existed,
-		]);
 
 		$dati_orig = $data;
 
@@ -1649,12 +1645,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			$this->getORM()->trigger('save', [
-				'element' => $this->getClassShortName(),
-				'id' => $this['id'],
-				'data' => $data,
-				'exists' => $existed,
-			]);
+			Events::dispatch(new OrmSave($this->getClassShortName(), $this['id'], $data, $existed));
 
 			$this->getORM()->getDb()->commit();
 		} catch (\Exception $e) {
@@ -1773,10 +1764,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!$this->exists()) // If it doesn't exist, then there is nothing to delete
 			return false;
 
-		$this->getORM()->trigger('delete', [
-			'element' => $this->getClassShortName(),
-			'id' => $this['id'],
-		]);
+		Events::dispatch(new OrmDelete($this->getClassShortName(), $this['id']));
 
 		try {
 			$this->getORM()->getDb()->beginTransaction();

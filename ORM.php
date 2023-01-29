@@ -19,7 +19,7 @@ class ORM extends Module
 	 */
 	function init(array $options)
 	{
-		Events::subscribeTo(ChangedTable::class, function (ChangedTable $event) {
+		Events::subscribeTo('ChangedTable', function (ChangedTable $event) {
 			if (array_key_exists($event->table, $this->children_loading)) {
 				foreach ($this->children_loading[$event->table] as &$cache) {
 					$cache['hasToLoad'] = $cache['ids'];
