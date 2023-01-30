@@ -2,7 +2,7 @@
 
 use Model\Events\AbstractEvent;
 
-class OrmDelete extends AbstractEvent
+class Delete extends AbstractEvent
 {
 	public function __construct(public string $element, public int $id)
 	{

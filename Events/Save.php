@@ -2,7 +2,7 @@
 
 use Model\Events\AbstractEvent;
 
-class OrmSave extends AbstractEvent
+class Save extends AbstractEvent
 {
 	public function __construct(public string $element, public int $id, public array $data, public bool $exists)
 	{

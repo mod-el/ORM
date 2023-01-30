@@ -4,8 +4,8 @@ use Model\Core\Autoloader;
 use Model\Core\Core;
 use Model\Events\Events;
 use Model\Form\Form;
-use Model\ORM\Events\OrmDelete;
-use Model\ORM\Events\OrmSave;
+use Model\ORM\Events\Delete;
+use Model\ORM\Events\Save;
 
 class Element implements \JsonSerializable, \ArrayAccess
 {
@@ -1645,7 +1645,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			Events::dispatch(new OrmSave($this->getClassShortName(), $this['id'], $data, $existed));
+			Events::dispatch(new Save($this->getClassShortName(), $this['id'], $data, $existed));
 
 			$this->getORM()->getDb()->commit();
 		} catch (\Exception $e) {
@@ -1764,7 +1764,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!$this->exists()) // If it doesn't exist, then there is nothing to delete
 			return false;
 
-		Events::dispatch(new OrmDelete($this->getClassShortName(), $this['id']));
+		Events::dispatch(new Delete($this->getClassShortName(), $this['id']));
 
 		try {
 			$this->getORM()->getDb()->beginTransaction();
