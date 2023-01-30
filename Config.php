@@ -81,13 +81,13 @@ $controllers = ' . var_export($controllers, true) . ';
 	}
 
 	/**
-	 * ModEl must be aware of the classes in order to update the elements cache, and Db must be updated
+	 * ModEl must be aware of the classes in order to update the elements cache
 	 *
 	 * @return array
 	 */
 	public function cacheDependencies(): array
 	{
-		return ['Core', 'Db'];
+		return ['Core'];
 	}
 
 	/**
@@ -100,32 +100,16 @@ $controllers = ' . var_export($controllers, true) . ';
 	}
 
 	/**
-	 * Rule for API actions
-	 *
-	 * @return array
-	 */
-	public function getRules(): array
-	{
-		return [
-			'rules' => [
-				'element' => 'element',
-			],
-			'controllers' => [
-				'ORM',
-			],
-		];
-	}
-
-	/**
 	 * Checks all elements with an "order by" field
 	 */
 	public function cleanUp()
 	{
 		if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php')) {
 			include(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php');
-
 			if (!isset($elements) or !is_array($elements))
 				return;
+
+			$db = \Model\Db\Db::getConnection();
 
 			foreach ($elements as $el => $elData) {
 				if (!$elData['table'])
@@ -136,9 +120,8 @@ $controllers = ' . var_export($controllers, true) . ';
 					foreach ($elData['order_by']['depending_on'] as $field)
 						$qryOrderBy[] = $field;
 					$qryOrderBy[] = $elData['order_by']['field'];
-					$qryOrderBy = implode(',', $qryOrderBy);
 
-					$righe = $this->model->_Db->select_all($elData['table'], [], [
+					$righe = $db->selectAll($elData['table'], [], [
 						'order_by' => $qryOrderBy,
 						'stream' => true,
 					]);
@@ -158,7 +141,7 @@ $controllers = ' . var_export($controllers, true) . ';
 						$currentOrder++;
 
 						if ($r[$elData['order_by']['field']] != $currentOrder) {
-							$this->model->_Db->update($elData['table'], $r[$elData['primary']], [
+							$db->update($elData['table'], $r[$elData['primary']], [
 								$elData['order_by']['field'] => $currentOrder,
 							]);
 						}

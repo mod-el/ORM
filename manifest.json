@@ -3,11 +3,13 @@
 	"description": "Elements management",
 	"version": "4.0.0",
 	"dependencies": {
-		"Core": ">=2.10.0",
-		"Db": ">=5.0.0",
-		"Form": ">=1.5.0",
+		"Core": ">=3.0.0",
+		"Form": ">=1.6.0",
 		"RandToken": ">=0.2.0"
 	},
+	"requires": [
+		"model/db"
+	],
 	"file-types": {
 		"Element": {
 			"folder": "Elements",

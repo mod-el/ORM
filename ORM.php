@@ -469,20 +469,6 @@ class ORM extends Module
 	}
 
 	/**
-	 * Controller for API actions
-	 *
-	 * @param array $request
-	 * @param string $rule
-	 * @return array
-	 */
-	public function getController(array $request, string $rule): ?array
-	{
-		return [
-			'controller' => 'ORM',
-		];
-	}
-
-	/**
 	 * @param string $element
 	 * @return string
 	 * @throws \Model\Core\Exception
