@@ -1972,8 +1972,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	public function duplicate(array $replace = []): Element
 	{
+		$db = $this->getORM()->getDb();
+
 		try {
-			$this->getORM()->getDb()->beginTransaction();
+			$db->beginTransaction();
 
 			$data = $this->getData(true);
 
@@ -1983,7 +1985,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					unset($data[$k]);
 			}
 
-			$tableModel = $this->getORM()->getDb()->getTable($this->settings['table']);
+			$tableModel = $db->getTable($this->settings['table']);
 			foreach ($data as $k => $v) {
 				if (isset($tableModel->columns[$k]) and str_contains($tableModel->columns[$k]['extra'], 'GENERATED'))
 					unset($data[$k]);
@@ -1996,7 +1998,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 			$newEl->save($data, ['afterSave' => false]);
 
 			if (class_exists('\\Model\\Multilang\\Ml')) {
-				$db = $this->getORM()->getDb();
 				$mlTable = \Model\Multilang\Ml::getTableFor($db, $this->settings['table']);
 				if ($mlTable) {
 					$mlOptions = \Model\Multilang\Ml::getTableOptionsFor($db, $this->settings['table']);
@@ -2044,7 +2045,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						$data = $ch->options['assoc'];
 						unset($data[$children['assoc']['primary'] ?? 'id']);
 						$data[$children['assoc']['parent']] = $newEl[$this->settings['primary']];
-						$this->model->insert($children['assoc']['table'], $data);
+						$db->insert($children['assoc']['table'], $data);
 					} else {
 						$ch->duplicate([$children['field'] => $newEl[$this->settings['primary']]]);
 					}
@@ -2053,11 +2054,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 			$newEl->afterSave(false, $data);
 
-			$this->getORM()->getDb()->commit();
+			$db->commit();
 
 			return $newEl;
 		} catch (\Exception $e) {
-			$this->getORM()->getDb()->rollBack();
+			$db->rollBack();
 			throw $e;
 		}
 	}
