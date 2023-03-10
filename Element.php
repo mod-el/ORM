@@ -1135,7 +1135,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 			if (!$tableName)
 				$this->model->error('Can\'t find table name in getForm method');
 
-			$fieldsSettings = $isAssoc ? (isset($this->settings['assoc']) ? ($this->settings['assoc']['fields'] ?? []) : []) : ($this->settings['fields'] ?? []);
 			$formOptions = [
 				'table' => $tableName,
 				'element' => $this,
@@ -1171,7 +1170,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						continue;
 					}
 
-					foreach ($fieldsSettings as $field_for_check) {
+					foreach ($this->settings['fields'] as $field_for_check) {
 						if (
 							$field_for_check['type'] === 'file'
 							and (($field_for_check['name_db'] ?? null) === $ck or ($field_for_check['ext_db'] ?? null) === $ck)
@@ -1184,8 +1183,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 						'value' => $isAssoc ? ($this->options['assoc'][$ck] ?? null) : $this->data_arr[$ck],
 					];
 
-					if (array_key_exists($ck, $fieldsSettings))
-						$opt = array_merge_recursive_distinct($opt, $fieldsSettings[$ck]);
+					if (array_key_exists($ck, $this->settings['fields']))
+						$opt = array_merge_recursive_distinct($opt, $this->settings['fields'][$ck]);
 					if (isset($opt['show']) and !$opt['show'])
 						continue;
 
@@ -1193,7 +1192,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 			}
 
-			foreach ($fieldsSettings as $k => $f) {
+			foreach ($this->settings['fields'] as $k => $f) {
 				if ($f['type'] !== 'file' and $f['type'] !== 'custom')
 					continue;
 
