@@ -2001,18 +2001,18 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$mlTableModel = $db->getParser()->getTable($mlTable);
 					foreach (\Model\Multilang\Ml::getLangs() as $lang) {
 						$row = $db->select($mlTable, [
-							$mlOptions['keyfield'] => $this[$this->settings['primary']],
-							$mlOptions['lang'] => $lang,
+							$mlOptions['parent_field'] => $this[$this->settings['primary']],
+							$mlOptions['lang_field'] => $lang,
 						]);
 
 						if ($row) {
 							unset($row[$mlTableModel->primary[0]]);
-							unset($row[$mlOptions['keyfield']]);
-							unset($row[$mlOptions['lang']]);
+							unset($row[$mlOptions['parent_field']]);
+							unset($row[$mlOptions['lang_field']]);
 
 							$db->update($mlTable, [
-								$mlOptions['keyfield'] => $newEl[$this->settings['primary']],
-								$mlOptions['lang'] => $lang,
+								$mlOptions['parent_field'] => $newEl[$this->settings['primary']],
+								$mlOptions['lang_field'] => $lang,
 							], $row);
 						}
 					}
