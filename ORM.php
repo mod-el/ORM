@@ -219,11 +219,10 @@ class ORM extends Module
 			if ($this->isNonDistinctGrouped($options, $tableModel->primary[0]) or ($options['sum'] ?? false) or ($options['max'] ?? false))
 				$r[$tableModel->primary[0]] = 0;
 
-			if ($tableModel->primary[0] and $r[$tableModel->primary[0]] and isset($this->objects_cache[$element][$r[$tableModel->primary[0]]])) {
+			if ($tableModel->primary[0] and $r[$tableModel->primary[0]] and isset($this->objects_cache[$element][$r[$tableModel->primary[0]]]))
 				$obj = $this->objects_cache[$element][$r[$tableModel->primary[0]]];
-			} else {
-				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table]);
-			}
+			else
+				$obj = new $element($r, ['model' => $this->model, 'pre_loaded' => true, 'table' => $table, 'idx' => $this->module_id]);
 
 			yield $obj;
 		}
