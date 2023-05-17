@@ -37,7 +37,7 @@ if ($elements_tree) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css"/>
 
-<style type="text/css">
+<style>
 	#canvas {
 		width: 100%;
 		height: 600px;
