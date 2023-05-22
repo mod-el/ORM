@@ -1778,7 +1778,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 					$d->delete();
 
 				$this->afterDelete();
-				if ($this[$this->settings['primary']] and isset($this->parent, $this->init_parent) and $this->init_parent['children'] and $this->parent->children_ar and isset($this->parent->children_ar[$this->init_parent['children']]))
+				if ($this[$this->settings['primary']] and isset($this->parent, $this->init_parent) and $this->init_parent['children'] and $this->parent->children_ar and isset($this->parent->children_ar[$this->init_parent['children']]) and is_array($this->parent->children_ar[$this->init_parent['children']]) and array_key_exists($this[$this->settings['primary']], $this->parent->children_ar[$this->init_parent['children']]))
 					unset($this->parent->children_ar[$this->init_parent['children']][$this[$this->settings['primary']]]);
 			} else {
 				$this->model->error('Can\t delete, not allowed.');
