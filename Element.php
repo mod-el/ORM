@@ -123,25 +123,24 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Meant to be extended
 	 */
-	public function init()
+	public function init(): void
 	{
 	}
 
 	/**
 	 * Creates the array keys for the children, and registers the CLC if it can
 	 */
-	private function initChildren()
+	private function initChildren(): void
 	{
 		foreach ($this->relationships as $k => $child) {
 			if (!isset($this->children_ar[$k]))
 				$this->children_ar[$k] = false;
 
 			if ($child['type'] == 'multiple' and $child['table'] and isset($this[$this->settings['primary']])) {
-				if ($child['assoc']) {
+				if ($child['assoc'])
 					$this->getORM()->registerChildrenLoading($child['assoc']['table'], $child['assoc']['parent'], $this[$this->settings['primary']]);
-				} else {
+				else
 					$this->getORM()->registerChildrenLoading($child['table'], $child['field'], $this[$this->settings['primary']]);
-				}
 			}
 		}
 	}
@@ -157,7 +156,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Frees the memory as much as it can
 	 */
-	public function destroy()
+	public function destroy(): void
 	{
 		$this->model = null;
 
@@ -317,7 +316,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $options
 	 * @throws \Exception
 	 */
-	protected function has(string $name, array $options = [])
+	protected function has(string $name, array $options = []): void
 	{
 		$options = array_merge([
 			'type' => 'multiple', // "multiple" o "single"
@@ -376,7 +375,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $el
 	 * @param array $options
 	 */
-	protected function belongsTo(string $el, array $options = [])
+	protected function belongsTo(string $el, array $options = []): void
 	{
 		$options = array_merge([
 			'element' => $el,
@@ -394,7 +393,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $field
 	 * @param array $options
 	 */
-	protected function autoIncrement(string $field, array $options = [])
+	protected function autoIncrement(string $field, array $options = []): void
 	{
 		$this->ar_autoIncrement[$field] = array_merge([
 			'depending_on' => [],
@@ -410,7 +409,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $field
 	 * @param array $options
 	 */
-	protected function orderBy(string $field, array $options = [])
+	protected function orderBy(string $field, array $options = []): void
 	{
 		$this->ar_orderBy = array_merge([
 			'field' => $field,
@@ -430,7 +429,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param $options
 	 */
-	protected function beforeLoad(array &$options)
+	protected function beforeLoad(array &$options): void
 	{
 	}
 
@@ -440,7 +439,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $options
 	 * @throws \Model\Core\Exception
 	 */
-	public function load(array $options = null)
+	public function load(array $options = null): void
 	{
 		if ($this->_flagLoading or $this->destroyed)
 			return;
@@ -536,14 +535,14 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param array $options
 	 */
-	protected function afterLoad(array $options)
+	protected function afterLoad(array $options): void
 	{
 	}
 
 	/**
 	 * Loads the parent Element, if present
 	 */
-	private function autoLoadParent()
+	private function autoLoadParent(): void
 	{
 		if (!isset($this->parent) and isset($this->init_parent)) {
 			if (array_key_exists($this->init_parent['field'], $this->data_arr) and $this[$this->init_parent['field']]) {
@@ -575,7 +574,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Replaces multilang fields with an array of values (each key is a language)
 	 */
-	protected function loadMultilangTexts()
+	protected function loadMultilangTexts(): void
 	{
 		if (!$this->flagMultilangLoaded) {
 			if (!class_exists('\\Model\\Multilang\\Ml'))
@@ -639,7 +638,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $i
 	 * @param bool $use_loader
 	 */
-	protected function loadChildren(string $i, bool $use_loader = true)
+	protected function loadChildren(string $i, bool $use_loader = true): void
 	{
 		if (!array_key_exists($i, $this->relationships))
 			return;
@@ -759,7 +758,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * @param string $i
 	 */
-	public function reloadChildren(string $i)
+	public function reloadChildren(string $i): void
 	{
 		if (!array_key_exists($i, $this->relationships))
 			return;
@@ -774,7 +773,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @return array|null
 	 * @throws \Model\Core\Exception
 	 */
-	protected function children(string $i)
+	protected function children(string $i): ?array
 	{
 		if (!array_key_exists($i, $this->relationships))
 			return null;
@@ -792,10 +791,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Counts how many children there are of a particular kind (using Db count method)
 	 *
 	 * @param string $i
-	 * @return int
+	 * @return int|null
 	 * @throws \Model\Core\Exception
 	 */
-	public function count(string $i)
+	public function count(string $i): ?int
 	{
 		if (!array_key_exists($i, $this->relationships))
 			return null;
@@ -852,7 +851,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param bool $store
 	 * @return Element|null
 	 */
-	public function create(string $i, $id = 0, array $options = [], bool $store = false): ?Element
+	public function create(string $i, int|string $id = 0, array $options = [], bool $store = false): ?Element
 	{
 		if (!array_key_exists($i, $this->relationships))
 			$this->model->error('No children set named ' . $i);
@@ -937,9 +936,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Getter for the table
 	 *
-	 * @return string|bool
+	 * @return string|null
 	 */
-	public function getTable()
+	public function getTable(): ?string
 	{
 		return $this->settings['table'];
 	}
@@ -950,7 +949,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param string $k
 	 * @param mixed $v
 	 */
-	protected function setDefault(string $k, $v)
+	protected function setDefault(string $k, mixed $v): void
 	{
 		$this->settings['defaults'][$k] = $v;
 	}
@@ -964,7 +963,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @return bool|string
 	 * @throws \Exception
 	 */
-	public function render(string $template = null, array $options = [], bool $return = false)
+	public function render(string $template = null, array $options = [], bool $return = false): bool|string
 	{
 		if (!$this->model->isLoaded('Output'))
 			return false;
@@ -1209,7 +1208,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param array $data
 	 */
-	protected function beforeUpdate(array &$data)
+	protected function beforeUpdate(array &$data): void
 	{
 	}
 
@@ -1325,7 +1324,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param array $saving
 	 */
-	protected function afterUpdate(array $saving)
+	protected function afterUpdate(array $saving): void
 	{
 	}
 
@@ -1334,7 +1333,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param array $data
 	 */
-	protected function beforeSave(array &$data)
+	protected function beforeSave(array &$data): void
 	{
 	}
 
@@ -1658,10 +1657,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * $previous_data will be an array if the element previously existed, with the existing data
 	 * $saving is the actual data that have been saved
 	 *
-	 * @param bool|array $previous_data
+	 * @param false|array $previous_data
 	 * @param array $saving
 	 */
-	public function afterSave($previous_data, array $saving)
+	public function afterSave(false|array $previous_data, array $saving): void
 	{
 	}
 
@@ -1798,20 +1797,20 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Called after a succesful delete
 	 */
-	protected function afterDelete()
+	protected function afterDelete(): void
 	{
 	}
 
 	/**
 	 * Returns the data keys that actually exist (false on failure)
 	 *
-	 * @return array|bool
+	 * @return array|null
 	 */
-	public function getDataKeys()
+	public function getDataKeys(): ?array
 	{
 		$tableModel = $this->getORM()->getDb() ? $this->getORM()->getDb()->getTable($this->settings['table']) : false;
 		if (!$tableModel)
-			return false;
+			return null;
 		$columns = $tableModel->columns;
 		unset($columns[$this->settings['primary']]);
 		return array_keys($columns);
@@ -1905,13 +1904,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 	}
 
 	/**
-	 * Gets the path of one of the file (or the first one if no index is provided) - false on failure
+	 * Gets the path of one of the file (or the first one if no index is provided) - null on failure
 	 *
 	 * @param string|null $fIdx
 	 * @param array $options
-	 * @return string|bool
+	 * @return string|array|null
 	 */
-	public function getFilePath(string $fIdx = null, array $options = [])
+	public function getFilePath(string $fIdx = null, array $options = []): string|array|null
 	{
 		$options = array_merge([
 			'allPaths' => false,
@@ -1940,11 +1939,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 			}
 		}
 		if (!isset($dataset[$fIdx]))
-			return false;
+			return null;
 
 		$file = $dataset[$fIdx];
 		if (!is_object($file) or $file->options['type'] !== 'file')
-			return false;
+			return null;
 
 		if ($options['fakeElement'])
 			$form->options['element'] = $options['fakeElement'];
@@ -2065,7 +2064,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param array $replace
 	 */
-	protected function duplicableWith(array $replace)
+	protected function duplicableWith(array $replace): void
 	{
 		$this->replaceInDuplicate = $replace;
 	}
@@ -2081,9 +2080,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 	/**
 	 * @param string $ch
-	 * @return array
+	 * @return array|null
 	 */
-	public function getChildrenOptions(string $ch)
+	public function getChildrenOptions(string $ch): ?array
 	{
 		if (isset($this->relationships[$ch]))
 			return $this->relationships[$ch];
