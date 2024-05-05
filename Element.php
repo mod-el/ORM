@@ -427,7 +427,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * This will be called before element loading
 	 * Can, eventually, edit the options passed to the element
 	 *
-	 * @param $options
+	 * @param array $options
 	 */
 	protected function beforeLoad(array &$options): void
 	{
@@ -1415,7 +1415,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 				$id = $this[$this->settings['primary']];
 			} else {
-				$previous_data = false;
+				$previous_data = null;
 
 				$tableModel = $this->getORM()->getDb()->getTable($this->getTable());
 				foreach ($this->data_arr as $k => $v) { // If this is a new element, I'll save eventual data that does exist in the element but wasn't explicitly set
