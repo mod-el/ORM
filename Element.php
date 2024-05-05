@@ -770,10 +770,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Returns a specific set of children, loads them if necessary
 	 *
 	 * @param string $i
-	 * @return array|null
+	 * @return array|Element|null
 	 * @throws \Model\Core\Exception
 	 */
-	protected function children(string $i): ?array
+	protected function children(string $i): array|Element|null
 	{
 		if (!array_key_exists($i, $this->relationships))
 			return null;
