@@ -190,7 +190,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param $i
 	 * @return mixed
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function __get($i)
 	{
@@ -204,7 +204,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param bool $removePrimary
 	 * @return array
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function getData(bool $removePrimary = false): array
 	{
@@ -437,7 +437,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Method to load the element - it's automatically called every time the user tries to access any of the properties, or it can be called manually as well
 	 *
 	 * @param array $options
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function load(array $options = null): void
 	{
@@ -453,7 +453,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		if (!$this->loaded) {
 			if (!isset($this->model))
-				throw new \Model\Core\Exception('Model not provided for an istance of ' . get_class($this));
+				throw new \Exception('Model not provided for an istance of ' . get_class($this));
 
 			$this->exists = true;
 			if (!$this->settings['pre_loaded']) {
@@ -771,7 +771,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param string $i
 	 * @return array|Element|null
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	protected function children(string $i): array|Element|null
 	{
@@ -784,7 +784,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!array_key_exists($i, $this->children_ar) or $this->children_ar[$i] === false)
 			$this->loadChildren($i);
 
-		return $this->children_ar[$i] ?: null;
+		return $this->children_ar[$i] !== false ? $this->children_ar[$i] : null;
 	}
 
 	/**
@@ -792,7 +792,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param string $i
 	 * @return int|null
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function count(string $i): ?int
 	{
@@ -925,7 +925,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Does the element exists? (is an actual row in the database?)
 	 *
 	 * @return bool
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function exists(): bool
 	{
@@ -1003,7 +1003,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Reloads the data from database
 	 *
 	 * @return bool
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function reload(): bool
 	{
@@ -1117,7 +1117,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param bool $enableAssoc
 	 * @return Form
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function getForm(bool $enableAssoc = false): Form
 	{
@@ -1820,7 +1820,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * Returns the data in order to make the cache
 	 *
 	 * @return array
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function getElementTreeData(): array
 	{
