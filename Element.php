@@ -784,7 +784,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 		if (!array_key_exists($i, $this->children_ar) or $this->children_ar[$i] === false)
 			$this->loadChildren($i);
 
-		return $this->children_ar[$i];
+		return $this->children_ar[$i] ?: null;
 	}
 
 	/**
