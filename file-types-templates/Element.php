@@ -6,7 +6,7 @@ class {name} extends Element
 {
 	public static ?string $table = '{table}';
 
-	public function init()
+	public function init(): void
 	{
 
 	}
