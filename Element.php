@@ -299,7 +299,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 */
 	private function isArrayField(string $k): bool
 	{
-		$types = ['point'];
+		$types = ['point', 'json'];
 
 		$tableModel = $this->getORM()->getDb()->getTable($this->settings['table']);
 		if (!array_key_exists($k, $tableModel->columns))
