@@ -1397,7 +1397,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						if ($oldParents) {
 							$this->shiftOrder($previous_data[$this->ar_orderBy['field']], $oldParents);
 
-							$q = $db->select($this->settings['table'], $newParents, ['max' => $this->ar_orderBy['field']]);
+							$q = $db->select($this->settings['table'], $newParents, ['fields' => [], 'max' => $this->ar_orderBy['field']]);
 							$real_save[$this->ar_orderBy['field']] = (int)($q ? $q[$this->ar_orderBy['field']] : 0) + 1;
 						}
 					}
@@ -1433,7 +1433,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 						foreach ($opt['depending_on'] as $field)
 							$where[$field] = $saving[$field] ?? $this[$field];
 
-						$q = $db->select($this->settings['table'], $where, ['max' => $k]);
+						$q = $db->select($this->settings['table'], $where, ['fields' => [], 'max' => $k]);
 						$saving[$k] = (int)($q ? $q[$k] : 0) + 1;
 						$this[$k] = $saving[$k];
 					}
