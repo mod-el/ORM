@@ -436,10 +436,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Method to load the element - it's automatically called every time the user tries to access any of the properties, or it can be called manually as well
 	 *
-	 * @param array $options
+	 * @param array|null $options
 	 * @throws \Exception
 	 */
-	public function load(array $options = null): void
+	public function load(?array $options = null): void
 	{
 		if ($this->_flagLoading or $this->destroyed)
 			return;
@@ -957,13 +957,13 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * Renders the template of this element, if present
 	 *
-	 * @param string $template
+	 * @param string|null $template
 	 * @param array $options
 	 * @param bool $return
 	 * @return bool|string
 	 * @throws \Exception
 	 */
-	public function render(string $template = null, array $options = [], bool $return = false): bool|string
+	public function render(?string $template = null, array $options = [], bool $return = false): bool|string
 	{
 		if (!$this->model->isLoaded('Output'))
 			return false;
@@ -1342,12 +1342,12 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * If no data is provided, it saves the current internal data
 	 * Returns the saved element id
 	 *
-	 * @param array $data
+	 * @param array|null $data
 	 * @param array $options
 	 * @return int
 	 * @throws \Exception
 	 */
-	public function save(array $data = null, array $options = []): int
+	public function save(?array $data = null, array $options = []): int
 	{
 		$options = array_merge([
 			'checkboxes' => false,
@@ -1698,11 +1698,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $data
 	 * @param array $keys
 	 * @param string $ch
-	 * @param string $id
+	 * @param string|null $id
 	 * @param bool $checkboxes
 	 * @return array
 	 */
-	private function getChildrenData(array $data, array $keys, string $ch, string $id = null, bool $checkboxes = false): array
+	private function getChildrenData(array $data, array $keys, string $ch, ?string $id = null, bool $checkboxes = false): array
 	{
 		$arr = [];
 		foreach ($data as $k => $v) {
@@ -1897,7 +1897,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $options
 	 * @return bool
 	 */
-	public function fileExists(string $fIdx = null, array $options = []): bool
+	public function fileExists(?string $fIdx = null, array $options = []): bool
 	{
 		$path = $this->getFilePath($fIdx, $options);
 		return ($path and file_exists(INCLUDE_PATH . $path));
@@ -1910,7 +1910,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 * @param array $options
 	 * @return string|array|null
 	 */
-	public function getFilePath(string $fIdx = null, array $options = []): string|array|null
+	public function getFilePath(?string $fIdx = null, array $options = []): string|array|null
 	{
 		$options = array_merge([
 			'allPaths' => false,
