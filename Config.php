@@ -5,13 +5,13 @@ use Model\Core\Module_Config;
 
 class Config extends Module_Config
 {
-	public $configurable = true;
-	public $hasCleanUp = true;
+	public bool $configurable = true;
+	public bool $hasCleanUp = true;
 
 	/**
 	 * @throws \Model\Core\Exception
 	 */
-	protected function assetsList()
+	protected function assetsList(): void
 	{
 		$this->addAsset('data', 'elements-tree.php', function () {
 			return '<?php
@@ -102,7 +102,7 @@ $controllers = ' . var_export($controllers, true) . ';
 	/**
 	 * Checks all elements with an "order by" field
 	 */
-	public function cleanUp()
+	public function cleanUp(): void
 	{
 		if (file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php')) {
 			include(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'elements-tree.php');
