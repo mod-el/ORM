@@ -1,4 +1,7 @@
-# ORM Module Documentation
+---
+description: Docs and usage examples for ModEl ORM - Whenever you work with ORM or Element classes, this documentation is relevant
+alwaysApply: false
+---
 
 The ORM (Object-Relational Mapping) module for ModEl Framework provides a powerful system for working with database entities in an object-oriented way. It consists of two main components: the `ORM` class for managing elements and the `Element` class representing individual database records.
 
