@@ -209,7 +209,27 @@ class User extends Element
 
 - `$table`: Database table name (this is the only required property)
 - `$controller`: Associated controller for URL generation (optional)
-- `$fields`: Field definitions for forms and files (fields are retrieved automatically from the database, here you can override their type or settings)
+- `$fields`: Field definitions for forms and files
+
+#### About fields
+Fields are retrieved automatically from the database, here you can override their type or settings.
+The field type can be:
+- "text" (a normal string)
+- "textarea"
+- "file"
+- "password"
+- "number"
+- "checkbox"
+- "select"
+- "autocomplete"
+- "radio"
+- "date"
+- "time"
+- "datetime"
+- "color"
+
+"select" and "autocomplete" will automatically be filled with the options from the database if a foreign key is detected.
+"checkbox" fields must always be defined, because the framework cannot guess if it is a checkbox or a normal input (it will be rendered as number otherwise).
 
 ### Data Access
 
@@ -499,6 +519,11 @@ All `has()` options:
 - `afterSave` (callable): Hook after saving child
 - `afterGet` (callable): Hook after loading children
 - `custom` (callable): Custom function to return children
+
+### Relationships with Element or table
+
+A relationship can be defined with an Element class or directly with a table name.
+In the latter case, the table name must be specified in the `table` options; if you want to customize the fields of the relationship (e.g. for admin module), since you do not have an Element class to work with, you can use the `fields` option.
 
 **Example with hooks:**
 ```php
