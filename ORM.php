@@ -309,6 +309,8 @@ class ORM extends Module
 		foreach ($orderBy['depending_on'] as $field)
 			$arr[] = $field;
 		$arr[] = $orderBy['field'];
+		foreach (($orderBy['additional_fields'] ?? []) as $field)
+			$arr[] = $field;
 
 		return $arr;
 	}
@@ -427,6 +429,42 @@ class ORM extends Module
 	}
 
 	/**
+	 * @param string $element
+	 * @return void
+	 */
+	public function realignOrdering(string $element, ?array $el_data = null): void
+	{
+		if ($el_data === null) {
+			$tree = $this->getElementsTree();
+			if (!isset($tree['elements'][$element]))
+				return;
+			$el_data = $tree['elements'][$element];
+		}
+
+		if (!$el_data['order_by'] or !$el_data['order_by']['custom'])
+			return;
+
+		$fullClass = $this->getNamespacedElement($element);
+		$qryOrderBy = $this->parseOrderBy($el_data['order_by']);
+
+		$items = $this->getDb()->selectAll($fullClass::$table, [], ['order_by' => $qryOrderBy]);
+		$orderings = [];
+		foreach ($items as $item) {
+			$orderingIdx = [];
+			foreach ($el_data['order_by']['depending_on'] as $field)
+				$orderingIdx[] = $item[$field];
+			$orderingIdx = implode('-', $orderingIdx);
+
+			if (!isset($orderings[$orderingIdx]))
+				$orderings[$orderingIdx] = 0;
+			$orderings[$orderingIdx]++;
+
+			if ($item[$el_data['order_by']['field']] != $orderings[$orderingIdx])
+				$this->getDb()->update($fullClass::$table, $item['id'], [$el_data['order_by']['field'] => $orderings[$orderingIdx]]);
+		}
+	}
+
+	/**
 	 * Returns the cached elements data (false if not found)
 	 *
 	 * @return ?array
@@ -449,7 +487,10 @@ class ORM extends Module
 		return $this->elements_tree;
 	}
 
-	public function flushElementsTreeCache()
+	/**
+	 * @return void
+	 */
+	public function flushElementsTreeCache(): void
 	{
 		unset($this->elements_tree);
 	}

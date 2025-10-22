@@ -24,7 +24,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 	public static ?string $table = null;
 	public static array $fields = [];
-	public static array $files = []; // Backward compatibility
+	public static array $files = []; // Deprecated
 	public static ?string $controller = null;
 
 	protected ?array $init_parent = null;
@@ -54,7 +54,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'pre_loaded_children' => [],
 			'defaults' => [],
 			'options' => [],
-			'files' => [], // Backward compatibility
 			'fields' => [], // For the form module
 			'assoc' => null,
 			'model' => null,
@@ -105,17 +104,10 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		$this->settings['fields'] = $fields;
 
-		/* Backward compatibility */
-		$this->settings['files'] = array_merge_recursive_distinct($this->settings['assoc'] ? [] : $this::$files, $this->settings['files']);
-		foreach ($this->settings['files'] as $fk => $f) {
-			if (!is_array($f))
-				$f['path'] = $f;
-			$f['type'] = 'file';
-
-			if (!isset($this->settings['fields'][$fk]))
-				$this->settings['fields'][$fk] = [];
-			$this->settings['fields'][$fk] = array_merge_recursive_distinct($this->settings['fields'][$fk], $f);
-		}
+		/* Deprecations */
+		$this->settings['files'] = array_merge_recursive_distinct($this->settings['assoc'] ? [] : $this::$files, $this->settings['files'] ?? []);
+		if (count($this->settings['files']))
+			throw new \Exception('Element::$files is deprecated, use Element::$fields with type "file" instead.');
 
 		$this->initChildren();
 	}
@@ -330,7 +322,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'save-costraints' => [], // If save == true, this fields will be checked as mandatory, and the child will not be saved if one of them is empty
 			'assoc' => false, // Settings for a "many to many" relationshipt (array with these fields: table, parent, field, where*, order_by*) *not mandatory
 			'fields' => [], // Fields for each one of the children
-			'files' => [], // Backward compatibility
 			'duplicable' => true, // Can be duplicated?
 			'primary' => null, // Primary field in the children table
 			'beforeSave' => null, // Signature: function(array &$data)
@@ -415,6 +406,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 			'field' => $field,
 			'custom' => false,
 			'depending_on' => [],
+			'additional_fields' => [],
 		], $options);
 
 		if (!is_array($this->ar_orderBy['depending_on']))
@@ -528,6 +520,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 		}
 
 		$this->_flagLoading = false;
+
+		if ($this->exists and $this->ar_orderBy and $this->ar_orderBy['custom'] and !$this->data_arr[$this->ar_orderBy['field']])
+			$this->getORM()->realignOrdering($this->getClassShortName());
 	}
 
 	/**
@@ -645,14 +640,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		$this->load();
 
-		if ($use_loader and method_exists($this, 'load_' . $i)) { // Backward compatibility
-			if (DEBUG_MODE)
-				throw new \Exception('load_* loader methods in ORM elements are deprecated');
-
-			$this->{'load_' . $i}();
-
-			return;
-		}
+		if ($use_loader and method_exists($this, 'load_' . $i))
+			throw new \Exception('load_* loader methods in ORM elements are deprecated');
 
 		$relationship = $this->relationships[$i];
 
@@ -1870,12 +1859,11 @@ class Element implements \JsonSerializable, \ArrayAccess
 	 *
 	 * @param int $oldOrder
 	 * @param array $parentsValue
-	 * @return bool
 	 */
-	private function shiftOrder(int $oldOrder, array $parentsValue = []): bool
+	private function shiftOrder(int $oldOrder, array $parentsValue = []): void
 	{
 		if (!$this->ar_orderBy)
-			return false;
+			return;
 
 		$db = $this->getORM()->getDb();
 
@@ -1888,8 +1876,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 		$where[] = $db->parseColumn($this->ar_orderBy['field']) . '>' . $db->parseValue($oldOrder ?: '0');
 
 		$db->query('UPDATE ' . $db->parseColumn($this->settings['table']) . ' SET ' . $db->parseColumn($this->ar_orderBy['field']) . '=' . $db->parseColumn($this->ar_orderBy['field']) . '-1 WHERE ' . implode(' AND ', $where));
-
-		return true;
 	}
 
 	/**
@@ -2093,30 +2079,44 @@ class Element implements \JsonSerializable, \ArrayAccess
 	/**
 	 * @param int $to
 	 * @return bool
-	 * @throws \Exception
 	 */
 	public function changeOrder(int $to): bool
 	{
 		if (!$this->ar_orderBy)
 			return false;
 
+		$db = $this->getORM()->getDb();
+
 		$where = [];
 		foreach ($this->ar_orderBy['depending_on'] as $field)
 			$where[$field] = $this[$field];
 
-		$db = $this->getORM()->getDb();
-		$parsedTable = $db->parseColumn($this->settings['table']);
+		$tableName = $this->settings['table'];
+		$tableModel = $db->getTable($tableName);
+		if (!isset($tableModel->columns[$this->ar_orderBy['field']]))
+			return false;
+
+		$join_str = '';
+		if (!$tableModel->columns[$this->ar_orderBy['field']]['real']) {
+			$customTableName = \Model\LinkedTables\LinkedTables::getTables($db)[$tableName];
+			$join_str = ' INNER JOIN ' . $db->parseColumn($tableName) . ' m ON m.`id` = t.`id`';
+			$tableName = $customTableName;
+		}
+
+		$parsedTable = $db->parseColumn($tableName);
 		$parsedField = $db->parseColumn($this->ar_orderBy['field']);
 
 		$where[$this->ar_orderBy['field']] = ['>', $this[$this->ar_orderBy['field']]];
 		$sql = $db->getBuilder()->buildQueryString($where, ['operator' => 'AND']);
-		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '-1 WHERE ' . $sql, $this->settings['table'], 'UPDATE');
+		$db->query('UPDATE ' . $parsedTable . ' t' . $join_str . ' SET t.' . $parsedField . ' = t.' . $parsedField . '-1 WHERE ' . $sql, $tableName, 'UPDATE');
 
 		$where[$this->ar_orderBy['field']] = ['>=', $to];
 		$sql = $db->getBuilder()->buildQueryString($where, ['operator' => 'AND']);
-		$db->query('UPDATE ' . $parsedTable . ' SET ' . $parsedField . ' = ' . $parsedField . '+1 WHERE ' . $sql, $this->settings['table'], 'UPDATE');
+		$db->query('UPDATE ' . $parsedTable . ' t' . $join_str . ' SET t.' . $parsedField . ' = t.' . $parsedField . '+1 WHERE ' . $sql, $tableName, 'UPDATE');
 
 		$this->save([$this->ar_orderBy['field'] => $to]);
+
+		$this->getORM()->realignOrdering($this->getClassShortName());
 
 		return true;
 	}

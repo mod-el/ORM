@@ -115,38 +115,8 @@ $controllers = ' . var_export($controllers, true) . ';
 				if (!$elData['table'])
 					continue;
 
-				if ($elData['order_by'] and $elData['order_by']['custom']) {
-					$qryOrderBy = [];
-					foreach ($elData['order_by']['depending_on'] as $field)
-						$qryOrderBy[] = $field;
-					$qryOrderBy[] = $elData['order_by']['field'];
-
-					$righe = $db->selectAll($elData['table'], [], [
-						'order_by' => $qryOrderBy,
-						'stream' => true,
-					]);
-
-					$lastParent = null;
-					$currentOrder = 0;
-					foreach ($righe as $r) {
-						$parentString = [];
-						foreach ($elData['order_by']['depending_on'] as $field)
-							$parentString[] = $r[$field];
-						$parentString = implode(',', $parentString);
-						if ($parentString and $parentString !== $lastParent) {
-							$lastParent = $parentString;
-							$currentOrder = 0;
-						}
-
-						$currentOrder++;
-
-						if ($r[$elData['order_by']['field']] != $currentOrder) {
-							$db->update($elData['table'], $r[$elData['primary']], [
-								$elData['order_by']['field'] => $currentOrder,
-							]);
-						}
-					}
-				}
+				if ($elData['order_by'] and $elData['order_by']['custom'])
+					$this->model->_ORM->realignOrdering($el, $elData);
 			}
 		}
 	}
