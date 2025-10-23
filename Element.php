@@ -650,11 +650,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 
 		if (!empty($relationship['custom']) and $use_loader) {
 			$this->children_ar[$i] = $relationship['custom']();
-			if (!empty($relationship['fields']) or !empty($relationship['files'])) {
-				foreach ($this->children_ar[$i] as $item) {
+			if (!empty($relationship['fields'])) {
+				foreach ($this->children_ar[$i] as $item)
 					$item->settings['fields'] = array_merge($item->settings['fields'] ?? [], $relationship['fields']);
-					$item->settings['files'] = array_merge($item->settings['files'] ?? [], $relationship['files']);
-				}
 			}
 			return;
 		}
@@ -673,9 +671,9 @@ class Element implements \JsonSerializable, \ArrayAccess
 				}
 
 				if ($relationship['element'] !== 'Element')
-					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this[$relationship['field']], ['files' => $relationship['files'], 'fields' => $relationship['fields'], 'joins' => $relationship['joins']]);
+					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this[$relationship['field']], ['fields' => $relationship['fields'], 'joins' => $relationship['joins']]);
 				else
-					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this->getORM()->getDb()->select($relationship['table'], $this[$relationship['field']]), ['clone' => true, 'parent' => $this, 'joins' => $relationship['joins'], 'table' => $relationship['table'], 'files' => $relationship['files'], 'fields' => $relationship['fields']]);
+					$this->children_ar[$i] = $this->getORM()->one($relationship['element'], $this->getORM()->getDb()->select($relationship['table'], $this[$relationship['field']]), ['clone' => true, 'parent' => $this, 'joins' => $relationship['joins'], 'table' => $relationship['table'], 'fields' => $relationship['fields']]);
 				break;
 			case 'multiple':
 				$read_options = [];
@@ -698,7 +696,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 							'table' => $relationship['table'],
 							'joins' => $relationship['joins'],
 							'options' => ['assoc' => $c],
-							'files' => $relationship['files'],
 							'fields' => $relationship['fields'],
 							'primary' => $relationship['primary'],
 							'assoc' => $relationship['assoc'],
@@ -730,7 +727,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 								'pre_loaded' => true,
 								'table' => $relationship['table'],
 								'joins' => $relationship['joins'],
-								'files' => $relationship['files'],
 								'fields' => $relationship['fields'],
 								'primary' => $relationship['primary'],
 							]);
@@ -857,7 +853,7 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if (!$child['field'])
 					return null;
 
-				$el = $this->getORM()->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'files' => $child['files'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
+				$el = $this->getORM()->create($child['element'], ['parent' => $this, 'options' => $options, 'table' => $child['table'], 'fields' => $child['fields'], 'joins' => $child['joins']]);
 				$el->update([$child['primary'] => $id]);
 				if ($store)
 					$this->children_ar[$i] = $el;
@@ -873,7 +869,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 					'parent' => $this,
 					'pre_loaded' => true,
 					'table' => $child['table'],
-					'files' => $child['files'],
 					'fields' => $child['fields'],
 					'joins' => $child['joins'],
 				];
@@ -1824,8 +1819,6 @@ class Element implements \JsonSerializable, \ArrayAccess
 				$ch['afterGet'] = true;
 			if (isset($ch['fields']))
 				unset($ch['fields']);
-			if (isset($ch['files']))
-				unset($ch['files']);
 			if (isset($ch['custom']))
 				unset($ch['custom']);
 
