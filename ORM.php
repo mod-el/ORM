@@ -291,7 +291,7 @@ class ORM extends Module
 	 * @return Element|null
 	 * @throws \Model\Core\Exception
 	 */
-	public function loadMainElement(string $element, $id, array $options = [])
+	public function loadMainElement(string $element, $id, array $options = []): ?Element
 	{
 		$this->element = $this->one($element, $id, $options) ?: null;
 		return $this->element;

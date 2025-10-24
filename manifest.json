@@ -1,7 +1,7 @@
 {
 	"name": "ORM",
 	"description": "Elements management",
-	"version": "4.0.0",
+	"version": "5.0.0",
 	"dependencies": {
 		"Core": ">=3.0.0",
 		"Form": ">=1.6.0",
