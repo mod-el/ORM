@@ -228,8 +228,13 @@ The field type can be:
 - "datetime"
 - "color"
 
-"select" and "autocomplete" will automatically be filled with the options from the database if a foreign key is detected.
+"select" and "autocomplete" will automatically be filled with the options from the database in the following cases:
+- a foreign key is detected on that field
+- the field is a enum
+
 "checkbox" fields must always be defined, because the framework cannot guess if it is a checkbox or a normal input (it will be rendered as number otherwise).
+
+Generally, override only the fields of which you want to change the default behaviour (e.g. a foreign key will automatically be a select, so you don't need to specify it unless you want to further refine it).
 
 ### Data Access
 
