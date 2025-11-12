@@ -264,7 +264,8 @@ class Element implements \JsonSerializable, \ArrayAccess
 				if (count($this->data_arr[$offset]) === 0)
 					return null;
 				if (class_exists('\\Model\\Multilang\\Ml')) {
-					$priorities = [\Model\Multilang\Ml::getLang()] + ($this->model->_Multilang->options['fallback'] ?: []);
+					$mlConfig = \Model\Config\Config::get('multilang');
+					$priorities = [\Model\Multilang\Ml::getLang()] + ($mlConfig['fallback'] ?: []);
 					foreach ($priorities as $lang) {
 						if (!empty($this->data_arr[$offset][$lang]))
 							return $this->data_arr[$offset][$lang];
